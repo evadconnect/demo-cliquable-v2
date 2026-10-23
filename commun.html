@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Commun, EVAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="commun">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="page-head">
+      <div>
+        <p class="kicker">Bibliothèque en accès libre</p>
+        <h1>Le Commun</h1>
+        <p>Des solutions éprouvées sur le terrain par d'autres collectifs, et les indicateurs qui montrent ce qu'elles changent vraiment.</p>
+      </div>
+      <button type="button" class="btn btn-ghost" id="open-propose" aria-controls="propose">Proposer une solution</button>
+    </div>
+
+    <section class="doctrine doctrine-slim" aria-label="Doctrine du Commun">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 27C5 13 13 5 27 5c0 14-8 22-22 22z" fill="#A9C48A"/><path d="M7 25C12 19 17 14 23 9.5" stroke="#2C5234" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <p><strong>Le Commun est libre. Vérifié bat généré.</strong> Tout le monde peut consulter et utiliser ces solutions, sans compte ; une solution n'entre au Commun qu'une fois reliée à des preuves de terrain.</p>
+    </section>
+
+    <div class="commun-tools">
+      <div class="search">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <label for="commun-search" class="sr-only">Rechercher dans le Commun</label>
+        <input id="commun-search" type="search" placeholder="Rechercher : haie, compost, réparer…">
+      </div>
+      <div class="chips" id="commun-fams" role="group" aria-label="Filtrer par famille"></div>
+    </div>
+
+    <h2 class="sr-only">Solutions</h2>
+    <p id="commun-count" class="sr-only" aria-live="polite"></p>
+    <div class="grid" id="commun-grid"></div>
+
+    <div class="section-title">
+      <h2>Indicateurs de changement d'impact (ICI)</h2>
+      <p class="muted small">Ce qu'on observe concrètement sur un lieu quand ça marche.</p>
+    </div>
+    <div class="grid" id="ici-grid"></div>
+
+    <div id="my-proposals" class="panel" style="margin-top:28px" hidden></div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+
+<aside class="drawer" id="propose" aria-labelledby="propose-title" aria-hidden="true">
+  <div class="drawer-head">
+    <h2 id="propose-title">Proposer une solution</h2>
+    <button type="button" class="icon-btn" data-close-propose aria-label="Fermer le volet">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <p class="muted small">Tu as éprouvé quelque chose sur ton lieu ? Partage-le : la communauté le relira et le reliera à ses preuves.</p>
+  <form id="propose-form" novalidate>
+    <div class="field"><label for="p-nom">Nom de la solution</label><input id="p-nom" type="text" required placeholder="Ex. Bancs en palettes de réemploi"></div>
+    <div class="field"><label for="p-famille">Famille</label><select id="p-famille"></select></div>
+    <div class="field"><label for="p-change">Ce que ça change concrètement</label><textarea id="p-change" placeholder="Pour les gens, pour le sol, pour le quartier…"></textarea></div>
+    <fieldset class="field" style="border:0;padding:0;margin:0 0 14px"><legend class="lbl" style="margin-bottom:6px">ICI nourris</legend><div class="checks" id="p-ici"></div></fieldset>
+    <div class="field"><label for="p-ou">Où l'as-tu éprouvée ?</label><input id="p-ou" type="text" placeholder="Nom du lieu, commune"></div>
+    <button type="submit" class="btn btn-primary">Envoyer ma proposition</button>
+  </form>
+  <div class="confirm" id="propose-ok" tabindex="-1" role="status" hidden>
+    <p><strong>Merci, ta proposition sera relue par la communauté et reliée à ses preuves avant d'entrer au Commun.</strong></p>
+    <button type="button" class="btn btn-ghost btn-sm" data-close-propose>Fermer</button>
+  </div>
+</aside>
+
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

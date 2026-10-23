@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVAD, la carte vivante</title>
+<meta name="description" content="Démo cliquable d'EVAD : du rêve à la preuve, et la preuve rouvre le rêve.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="index">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="map-stage view-iso">
+      <div id="isomap" aria-label="Carte illustrée"></div>
+      <div id="map"></div>
+      <div class="map-view" role="group" aria-label="Vue de la carte">
+        <button type="button" data-view="iso" aria-pressed="true">Illustrée</button>
+        <button type="button" data-view="osm" aria-pressed="false">Carte</button>
+      </div>
+
+      <div class="map-filters" role="group" aria-label="Filtres de la carte">
+        <div class="map-filters-head">
+          <p class="f-title">Filtres</p>
+          <button type="button" class="icon-btn icon-sm filters-toggle" id="filters-toggle" aria-expanded="true" aria-controls="filters-body" aria-label="Réduire les filtres">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="map-filters-body" id="filters-body">
+          <p class="f-title">Avancement</p>
+          <div class="row">
+            <button type="button" class="chip" data-fstat="reve" aria-pressed="true"><span class="dot st-reve" aria-hidden="true"></span>Rêvés</button>
+            <button type="button" class="chip" data-fstat="encours" aria-pressed="true"><span class="dot st-encours" aria-hidden="true"></span>En cours</button>
+            <button type="button" class="chip" data-fstat="prouve" aria-pressed="true"><span class="dot st-prouve" aria-hidden="true"></span>Prouvés</button>
+          </div>
+          <label class="f-title" for="f-famille">Famille</label>
+          <select id="f-famille"></select>
+          <button type="button" class="chip" id="f-near" aria-pressed="false">Autour de moi</button>
+        </div>
+      </div>
+
+      <aside class="fiche" id="fiche" aria-label="Fiche projet" aria-hidden="true"></aside>
+    </div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+<footer id="footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/isomap.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

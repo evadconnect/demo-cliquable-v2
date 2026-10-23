@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entreprendre, EVAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="entreprendre">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="page-head">
+      <div>
+        <p class="kicker">Étape 4 sur 5</p>
+        <h1>Entreprendre</h1>
+        <p>Chaque solution posée devient une quête. Faites-les avancer ensemble, et prouvez-les sur le terrain.</p>
+      </div>
+    </div>
+
+    <section class="next-card" id="next-step" aria-live="polite"></section>
+
+    <div class="kanban" id="kanban"></div>
+
+    <section class="panel progress-card" aria-labelledby="prog-title">
+      <h2 id="prog-title">Avancement par espace</h2>
+      <div id="progress"></div>
+    </section>
+
+    <div class="step-nav">
+      <a class="btn btn-ghost" href="generer.html">Revenir à Générer</a>
+      <a class="btn btn-primary" href="nourrir.html">Passer à Nourrir</a>
+    </div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

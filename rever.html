@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rêver, EVAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="rever">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="page-head">
+      <div>
+        <p class="kicker">Étape 1 sur 5</p>
+        <h1>Rêver</h1>
+        <p>Inspire-toi des projets qui poussent déjà autour de toi, puis pose les premiers mots de ton rêve.</p>
+      </div>
+    </div>
+
+    <div class="split">
+      <section class="map-card" aria-label="Projets inspirants">
+        <div id="map"></div>
+        <p class="map-hint">Clique un projet pour t'en inspirer. Clique la carte pour situer ton lieu, ou glisse son marqueur.</p>
+        <div class="mini-fiche" id="mini-fiche" hidden></div>
+        <section class="visits" aria-labelledby="visits-title">
+          <h3 id="visits-title" class="mini-title">Des lieux à visiter</h3>
+          <p class="muted small" id="visits-sub"></p>
+          <ul class="visit-list" id="visit-list"></ul>
+        </section>
+      </section>
+
+      <section class="panel" aria-labelledby="vision-title">
+        <h2 id="vision-title">Ma vision</h2>
+        <div class="field">
+          <label for="v-nom">Nom du lieu</label>
+          <input id="v-nom" type="text" autocomplete="off" placeholder="Ex. Le Jardin du Lavoir">
+        </div>
+        <div class="field">
+          <label for="v-geo">Où se trouve-t-il ? <span class="hint">commune ou adresse, puis choisis dans la liste</span></label>
+          <div class="geo-row">
+            <input id="v-geo" type="search" autocomplete="off" placeholder="Ex. Périgueux, rue des Tanneurs">
+            <button type="button" class="btn btn-ghost btn-sm" id="v-geo-btn">Chercher</button>
+          </div>
+          <ul class="geo-results" id="v-geo-results" aria-label="Résultats de la recherche d'adresse"></ul>
+          <p class="geo-status" id="v-geo-status" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="v-promesse">Promesse <span class="hint">en une phrase, ce que le lieu change pour les gens</span></label>
+          <textarea id="v-promesse" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="v-reve">Dans 3 ans, on rêve de voir…</label>
+          <textarea id="v-reve" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label for="v-collectif">Le collectif <span class="hint">qui porte le lieu</span></label>
+          <textarea id="v-collectif" rows="2" placeholder="Ex. 6 habitants, une association de quartier, un maraîcher"></textarea>
+        </div>
+        <label class="check-line"><input type="checkbox" id="v-public" checked> <span>Afficher mon lieu sur la carte publique EVAD (nom, commune, promesse et avancement)</span></label>
+        <h3 class="mini-title">Projets épinglés</h3>
+        <ul class="pins" id="pins"></ul>
+        <div class="vision-actions">
+          <button type="button" class="btn btn-primary" id="to-explorer" disabled>Passer à Explorer</button>
+          <p class="muted small" id="next-hint">Donne un nom à ton projet pour continuer.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+<footer id="footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

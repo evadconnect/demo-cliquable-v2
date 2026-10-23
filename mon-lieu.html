@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon lieu, EVAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="monlieu">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="page-head">
+      <div>
+        <p class="kicker">Mon lieu</p>
+        <h1 id="ml-title">Mon lieu</h1>
+        <p id="ml-promesse"></p>
+      </div>
+      <div class="ml-actions">
+        <a class="btn btn-ghost btn-sm" href="generer.html">Modifier la maquette</a>
+        <a class="btn btn-primary btn-sm" href="nourrir.html">Apporter une preuve</a>
+      </div>
+    </div>
+
+    <div class="panel" id="ml-empty" hidden>
+      <p class="empty">Ton lieu n'a pas encore pris forme. Commence par le rêver : un nom, une promesse, un premier espace.</p>
+      <a class="btn btn-primary" href="rever.html">Rêver mon lieu</a>
+    </div>
+
+    <div class="ml-grid" id="ml-grid">
+      <section class="panel scene-card" aria-labelledby="ml-scene-title">
+        <h2 id="ml-scene-title">La maquette vivante</h2>
+        <p class="scene-state" id="ml-scene-state" aria-live="polite"></p>
+        <div id="ml-scene"></div>
+        <div class="scene-legend" aria-label="Légende">
+          <span><span class="lg-swatch lg-prevu" aria-hidden="true"></span>Prévu</span>
+          <span><span class="lg-swatch lg-encours" aria-hidden="true"></span>En cours</span>
+          <span><span class="lg-swatch lg-verifie" aria-hidden="true"></span>Vérifié</span>
+        </div>
+      </section>
+
+      <div>
+        <section class="panel" aria-labelledby="ml-today-title">
+          <div class="ml-head">
+            <h2 id="ml-today-title">Aujourd'hui</h2>
+            <button type="button" class="link-btn" id="ml-all" hidden>Tous les espaces</button>
+          </div>
+          <p class="muted small" id="ml-filter" aria-live="polite"></p>
+          <ul class="ml-list" id="ml-today"></ul>
+        </section>
+
+        <section class="panel" aria-labelledby="ml-elan-title" style="margin-top:20px">
+          <h2 id="ml-elan-title">Élan de la semaine</h2>
+          <p class="muted small">Ce qui a avancé, par famille d'ICI. Des repères qualitatifs, jamais un chiffre d'impact.</p>
+          <div id="ml-elan" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

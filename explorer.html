@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explorer, EVAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="assets/logo-evad.svg">
+</head>
+<body data-page="explorer">
+<a class="skip" href="#main">Aller au contenu</a>
+<header id="topbar"></header>
+<div class="shell">
+  <main id="main" class="stage">
+    <div class="page-head">
+      <div>
+        <p class="kicker">Étape 2 sur 5</p>
+        <h1>Explorer</h1>
+        <p>Découpe ton lieu en espaces, puis accroche à chacun des solutions éprouvées du Commun.</p>
+      </div>
+    </div>
+
+    <div class="explorer-grid">
+      <div>
+        <section class="panel mind-card" aria-labelledby="mind-title">
+          <h2 id="mind-title" class="sr-only">Carte mentale du projet</h2>
+          <p class="sel-hint" aria-live="polite">Espace sélectionné : <strong id="sel-space"></strong></p>
+          <div id="mind"></div>
+          <form class="space-tools" id="space-tools" hidden aria-label="Modifier l'espace sélectionné">
+            <div class="field"><label for="space-rename">Nom de l'espace</label><input id="space-rename" type="text" autocomplete="off" maxlength="40"></div>
+            <div class="field"><label for="space-kind">Nature</label>
+              <select id="space-kind">
+                <option value="">Libre (pelouse)</option>
+                <option value="jardin">Jardin, culture</option>
+                <option value="atelier">Atelier, réemploi</option>
+                <option value="cafe">Café, cuisine, accueil</option>
+                <option value="gouvernance">Gouvernance, agora</option>
+              </select></div>
+            <button type="submit" class="btn btn-ghost btn-sm">Enregistrer</button>
+            <button type="button" class="btn btn-ghost btn-sm btn-danger" id="space-delete">Supprimer</button>
+          </form>
+          <form class="add-space" id="add-space">
+            <div class="field"><label for="space-name">Nouvel espace</label><input id="space-name" type="text" autocomplete="off" placeholder="Ex. Verger partagé"></div>
+            <button type="submit" class="btn btn-ghost">Ajouter un espace</button>
+          </form>
+          <div class="space-sugg" id="space-sugg" aria-label="Espaces proposés par Deva"></div>
+        </section>
+
+        <section aria-labelledby="chosen-title" style="margin-top:20px">
+          <h2 id="chosen-title">Solutions choisies</h2>
+          <ul class="chosen-list" id="chosen"></ul>
+        </section>
+
+        <div class="step-nav">
+          <a class="btn btn-ghost" href="rever.html">Revenir à Rêver</a>
+          <a class="btn btn-primary" href="generer.html">Passer à Générer</a>
+        </div>
+      </div>
+
+      <aside class="panel commun-col" aria-labelledby="ex-commun-title">
+        <h2 id="ex-commun-title">Le Commun</h2>
+        <p class="muted small" style="margin:0 0 8px">Les solutions ajoutées s'accrochent à l'espace sélectionné.</p>
+        <div class="chips" id="ex-fams" role="group" aria-label="Filtrer par famille"></div>
+        <div class="list" id="ex-list"></div>
+      </aside>
+    </div>
+  </main>
+  <aside id="deva" class="deva" aria-label="Deva, ton assistant"></aside>
+</div>
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/scene.js"></script>
+<script src="assets/deva.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
