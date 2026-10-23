@@ -17,6 +17,11 @@
  *   MODEL_RAPIDE     (optionnel) modèle de l'orchestrateur et du gardien. Défaut : llama-3.1-8b-instant
  *   KNOWLEDGE_URL    (optionnel) base de connaissances. Défaut : le fichier publié sur GitHub Pages
  *   ALLOWED_ORIGINS  (optionnel) sites autorisés, séparés par des virgules
+ *   MODE_LEGER       (optionnel) "1" pour un petit modèle local (Ollama) : orchestrateur et gardien
+ *                    par règles, base de connaissances réduite, un seul appel au modèle par question.
+ *
+ * Mode local, sans serveur : le site peut aussi importer ce fichier dans le navigateur et appeler
+ * repondre() avec Ollama sur la machine (voir sma/README.md, « Modèle local et gratuit »).
  */
 
 const DEFAUTS = {
@@ -104,6 +109,7 @@ function nettoyer(texte) {
 /* ---------- Base de connaissances ---------- */
 let CACHE = { k: null, t: 0 };
 async function connaissances(env) {
+  if (env.KNOWLEDGE) return env.KNOWLEDGE;
   if (CACHE.k && Date.now() - CACHE.t < 10 * 60 * 1000) return CACHE.k;
   const r = await fetch(conf(env, "KNOWLEDGE_URL"), { cf: { cacheTtl: 600 } });
   if (!r.ok) throw new Error("base de connaissances introuvable (" + r.status + ")");
@@ -178,12 +184,33 @@ Réponds uniquement en JSON : {"agent": "<id>"}`;
   return parDefaut;
 }
 
+// Orchestrateur par règles (mode léger) : mots-clés, sinon l'agent de la page.
+const MOTS_AGENTS = {
+  nourrir: /(preuve|prouv|v[ée]rifi|vadit|\bici\b|indicateur|export|odd|csrd|pcaet|\brse\b|financeur|passer au vert)/,
+  entreprendre: /(qu[eê]te|plan d.action|par quoi commencer|qui fait quoi|organis|r[ée]partir|bloqu|conseil de lieu)/,
+  generer: /(maquette|poser|dessin|bloc|case|gris|jauge|d[ée]cor|2\.?5d|isom[ée]tri)/,
+  explorer: /(espace|jardin|atelier|caf[ée]|quelle solution|quelles solutions|choisir une solution|comparer)/,
+  reve: /(promesse|nommer|\bnom\b|appeler mon lieu|r[êe]ve|r[êe]ver|collectif|inspir|situer)/,
+  commun: /(\bcommun\b|biblioth[eè]que|proposer une solution|c.est quoi (la|le|les) )/,
+  monlieu: /(o[uù] j.en suis|mon tableau|aujourd.hui|r[ée]sum[ée]|prochaine [ée]tape|mon lieu)/,
+  guide: /(evad|compte|donn[ée]es|gratuit|t[ée]l[ée]phone|carte|qui es.tu|marche pas|bug)/
+};
+function orchestrerRegles(question, mode) {
+  const parDefaut = AGENT_PAR_MODE[mode] || "guide";
+  const t = question.toLowerCase();
+  if (MOTS_AGENTS[parDefaut] && MOTS_AGENTS[parDefaut].test(t)) return parDefaut;
+  for (const [id, rx] of Object.entries(MOTS_AGENTS)) if (rx.test(t)) return id;
+  return parDefaut;
+}
+
 /* ---------- 2. Spécialiste ---------- */
-function promptSpecialiste(K, id, projet, page) {
+function promptSpecialiste(K, id, projet, page, leger) {
   const a = AGENTS[id];
-  const faq = a.faq === "toutes" ? K.faq : a.faq.map((i) => K.faq[i]).filter(Boolean);
-  const base = Object.assign({ essentiel: K.faq.slice(0, 5), faq, etapes: K.etapes, conseilsDeLEtape: K.modes[a.mode] },
-    ...a.donnees.map((d) => tranche(K, d)));
+  let faq = a.faq === "toutes" ? K.faq : a.faq.map((i) => K.faq[i]).filter(Boolean);
+  if (leger && a.faq === "toutes") faq = K.faq.slice(5, 22);
+  const donnees = leger ? a.donnees.map((d) => (d === "solutions" ? "solutionsCourtes" : d)) : a.donnees;
+  const base = Object.assign({ essentiel: K.faq.slice(0, leger ? 3 : 5), faq, etapes: K.etapes, conseilsDeLEtape: K.modes[a.mode] },
+    ...donnees.map((d) => tranche(K, d)));
   return `Tu es Deva, l'assistant d'EVAD, une plateforme qui aide les collectifs à faire pousser des lieux régénératifs, du rêve à la preuve (parcours REGEN : Rêver, Explorer, Générer, Entreprendre, Nourrir).
 Dans le système multi-agents, tu es l'agent « ${a.label} ». ${a.role}
 
@@ -195,21 +222,22 @@ ${K.doctrine.regles.map((r) => "- " + r).join("\n")}
 - Tu t'appuies d'abord sur la base de connaissances ci-dessous et sur le projet du porteur. Si l'information n'y est pas, tu le dis simplement et tu proposes une piste, sans inventer de faits sur EVAD.
 - Si la question relève d'une autre étape, réponds brièvement et indique l'étape où le faire.
 
-Page actuelle : ${page || "inconnue"}.
-Projet du porteur (sur son appareil) : ${JSON.stringify(projet || {})}
-
 Base de connaissances :
 ${JSON.stringify(base)}
+
+Page actuelle : ${page || "inconnue"}.
+Projet du porteur (sur son appareil) : ${JSON.stringify(projet || {})}
 
 Réponds uniquement en JSON : {"reponse": "<ta réponse>", "suggestions": ["<question de suivi courte>", "<question de suivi courte>"]}
 Les suggestions sont des questions que l'utilisateur pourrait te poser ensuite (0 à 2, moins de 60 caractères).`;
 }
 
 /* ---------- 3. Gardien ---------- */
-async function garder(env, K, texte) {
+async function garder(env, K, texte, leger) {
   let t = nettoyer(texte);
   let problemes = controler(t);
   if (!problemes.length) return { texte: t, corrige: false };
+  if (leger) return { texte: K.doctrine.impact, corrige: true }; // petit modèle : pas de réécriture, règle stricte
   try {
     const r = await llm(env, conf(env, "MODEL_RAPIDE"), [
       { role: "system", content: "Tu es le gardien de la doctrine d'EVAD. Réécris le texte en gardant son sens et son ton, en corrigeant : " + problemes.join(", ") + ". Aucun chiffre d'impact (CO2, kg, tonnes, kWh, litres, euros, pourcentages) : renvoie plutôt vers les preuves de terrain, Vadance et Vadité. Mots interdits : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur. Réponds uniquement avec le texte réécrit." },
@@ -250,14 +278,15 @@ export async function repondre(env, body) {
     .filter((h) => h && (h.role === "user" || h.role === "assistant"))
     .map((h) => ({ role: h.role, text: court(h.text, 600) }));
   const K = await connaissances(env);
+  const leger = String(env.MODE_LEGER || "") === "1";
 
-  const agent = await orchestrer(env, question, mode, historique);
-  const messages = [{ role: "system", content: promptSpecialiste(K, agent, body.projet, court(body.page, 40)) }]
+  const agent = leger ? orchestrerRegles(question, mode) : await orchestrer(env, question, mode, historique);
+  const messages = [{ role: "system", content: promptSpecialiste(K, agent, body.projet, court(body.page, 40), leger) }]
     .concat(historique.map((h) => ({ role: h.role, content: h.text })))
     .concat([{ role: "user", content: question }]);
-  const { texte, modele } = await llmAgent(env, messages, { json: true });
+  const { texte, modele } = await llmAgent(env, messages, { json: true, max_tokens: leger ? 320 : 450 });
   const j = lireJSON(texte) || { reponse: texte };
-  const garde = await garder(env, K, String(j.reponse || texte));
+  const garde = await garder(env, K, String(j.reponse || texte), leger);
   const suggestions = (Array.isArray(j.suggestions) ? j.suggestions : [])
     .map((s) => nettoyer(String(s)).slice(0, 80)).filter((s) => s && !controler(s).length).slice(0, 2);
   return { status: 200, data: { reponse: garde.texte, suggestions, agent, agentLabel: AGENTS[agent].label, gardien: garde.corrige ? "corrigé" : "ok", modele } };

@@ -44,6 +44,27 @@ Le Worker accepte toute API compatible OpenAI : on peut remplacer Groq par Mistr
 
 Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLEDGE_URL` (par défaut la base publiée sur GitHub Pages), `ALLOWED_ORIGINS` (sites autorisés à appeler le Worker, par défaut GitHub Pages et localhost:8790).
 
+## Modèle local et gratuit (Ollama), sans serveur ni clé
+
+Le même SMA peut tourner entièrement sur un ordinateur, avec un modèle libre (Qwen 2.5, 3 milliards de paramètres). Rien ne sort de la machine, rien n'est payant. Le fichier `sma/worker.js` est alors chargé directement par le navigateur et appelle Ollama.
+
+En mode local, le SMA passe en mode léger : l'orchestrateur et le gardien fonctionnent par règles (mots-clés, contrôle de doctrine), la base de connaissances envoyée est réduite, et chaque question ne fait qu'un appel au modèle. Sur un ordinateur sans carte graphique dédiée, compter de quelques secondes à une minute par réponse, la première étant la plus lente (chargement du modèle).
+
+1. Installer Ollama : https://ollama.com/download
+2. Dans le Terminal :
+   ```bash
+   ollama pull qwen2.5:3b
+   launchctl setenv OLLAMA_ORIGINS "https://evadconnect.github.io,http://localhost:8790"
+   ```
+   puis quitter et relancer l'application Ollama (la deuxième ligne autorise le site à lui parler).
+3. Ouvrir le site avec `?deva=local` à la fin de l'adresse, par exemple https://evadconnect.github.io/demo-cliquable-v2/?deva=local. Si Chrome demande l'accès au réseau local, accepter. Le choix est mémorisé ; `?deva=off` revient au fonctionnement normal.
+
+Sous chaque réponse, Deva affiche « Agent ..., modèle local ». Si Ollama n'est pas lancé, Deva répond par règles, comme avant.
+
+Pour changer de modèle (plus rapide : `qwen2.5:1.5b` ; meilleur mais plus lent : `qwen2.5:7b`), modifier `SMA_LOCAL.modele` dans `assets/deva.js`.
+
+Limite : ce mode ne sert qu'à la personne assise devant l'ordinateur (démonstrations, développement). Pour les vrais utilisateurs, il faut soit le Worker en ligne ci-dessus, soit un serveur d'EVAD qui fait tourner Ollama.
+
 ## Mettre à jour les connaissances de Deva
 
 Les agents lisent `assets/deva-knowledge.json`, généré depuis `assets/data.js`. Après toute modification de `data.js` :

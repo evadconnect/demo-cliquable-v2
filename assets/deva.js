@@ -10,6 +10,18 @@
      Vide, ou injoignable : Deva répond avec ses règles locales, comme avant. */
   var SMA_URL = "";
   var SMA_TIMEOUT = 20000;
+  /* Mode local : modèle gratuit sur l'ordinateur (Ollama), sans serveur ni clé.
+     Activer avec ?deva=local dans l'adresse (mémorisé sur l'appareil), désactiver avec ?deva=off. */
+  var SMA_LOCAL = { url: "http://localhost:11434/v1", modele: "qwen2.5:3b", timeout: 180000 };
+  var local = (function () {
+    var v = null;
+    try { v = new URLSearchParams(location.search).get("deva"); } catch (e) { v = null; }
+    try {
+      if (v === "local") localStorage.setItem("evad-deva-local", "1");
+      if (v === "off") localStorage.removeItem("evad-deva-local");
+      return localStorage.getItem("evad-deva-local") === "1";
+    } catch (e) { return v === "local"; }
+  })();
   var histo = [];      // derniers échanges, transmis aux agents pour garder le fil
   var snapshot = null; // fonction fournie par la page : résumé du projet du porteur
   var curMode = null;
@@ -233,7 +245,7 @@
   }
   // Répond dans le panneau : d'abord le SMA (IA), sinon les règles locales.
   function respond(txt) {
-    if (!SMA_URL || !window.fetch) return respondLocal(txt);
+    if ((!SMA_URL && !local) || !window.fetch) return respondLocal(txt);
     var typing = bubble("from-deva is-typing", "");
     typing.setAttribute("aria-hidden", "true");
     typing.innerHTML = "<span></span><span></span><span></span>";
@@ -242,7 +254,7 @@
       histo.push({ role: "user", text: txt }, { role: "assistant", text: r.reponse });
       if (histo.length > 12) histo = histo.slice(-12);
       bubble("from-deva", r.reponse);
-      if (r.agentLabel) agentTag(r.agentLabel);
+      if (r.agentLabel) agentTag(r.agentLabel + (local ? ", modèle local" : ""));
       renderActions((r.suggestions || []).map(askAction));
     }).catch(function (e) {
       typing.remove();
@@ -259,6 +271,7 @@
   function askSMA(txt) {
     var projet = null;
     try { projet = snapshot ? snapshot() : null; } catch (e) { projet = null; }
+    if (local) return askLocal(txt, projet);
     var ctrl = window.AbortController ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, SMA_TIMEOUT);
     return fetch(SMA_URL, {
@@ -273,6 +286,20 @@
         return j;
       });
     }, function (e) { clearTimeout(timer); throw e; });
+  }
+  // Le même SMA (sma/worker.js), exécuté dans le navigateur et branché sur Ollama.
+  function askLocal(txt, projet) {
+    var env = {
+      LLM_API_KEY: "ollama", LLM_BASE_URL: SMA_LOCAL.url, MODEL_AGENT: SMA_LOCAL.modele, MODEL_RAPIDE: SMA_LOCAL.modele,
+      MODE_LEGER: "1", KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href
+    };
+    var body = { question: txt, mode: curMode, page: document.body.dataset.page || "", historique: histo.slice(-4), projet: projet };
+    var delai = new Promise(function (_, ko) { setTimeout(function () { ko(new Error("modèle local trop lent")); }, SMA_LOCAL.timeout); });
+    var appel = import(new URL("sma/worker.js", location.href).href).then(function (W) { return W.repondre(env, body); }).then(function (r) {
+      if (!r || r.status !== 200 || !r.data.reponse) throw new Error((r && r.data && r.data.erreur) || "réponse vide");
+      return r.data;
+    });
+    return Promise.race([appel, delai]);
   }
   // Petite étiquette sous la bulle : quel agent du SMA a répondu.
   function agentTag(label) {
@@ -355,5 +382,5 @@
     if (t) say(t, { nudge: true });
   }
 
-  window.Deva = { init: init, say: say, react: react, prompt: prompt, close: close, isOpen: isOpen, toggle: toggle, answer: answer, setContext: function (fn) { ctx = fn; }, setSnapshot: function (fn) { snapshot = fn; }, sma: function () { return SMA_URL; } };
+  window.Deva = { init: init, say: say, react: react, prompt: prompt, close: close, isOpen: isOpen, toggle: toggle, answer: answer, setContext: function (fn) { ctx = fn; }, setSnapshot: function (fn) { snapshot = fn; }, sma: function () { return local ? "local" : SMA_URL; } };
 })();
