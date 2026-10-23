@@ -12,7 +12,7 @@
   var SMA_TIMEOUT = 20000;
   /* Mode local : modèle gratuit sur l'ordinateur (Ollama), sans serveur ni clé.
      Activer avec ?deva=local dans l'adresse (mémorisé sur l'appareil), désactiver avec ?deva=off. */
-  var SMA_LOCAL = { url: "http://localhost:11434/v1", modele: "qwen2.5:3b", timeout: 180000 };
+  var SMA_LOCAL = { url: "http://localhost:11434", modele: "qwen2.5:3b", timeout: 240000 };
   var local = (function () {
     var v = null;
     try { v = new URLSearchParams(location.search).get("deva"); } catch (e) { v = null; }
@@ -249,15 +249,21 @@
     var typing = bubble("from-deva is-typing", "");
     typing.setAttribute("aria-hidden", "true");
     typing.innerHTML = "<span></span><span></span><span></span>";
-    askSMA(txt).then(function (r) {
+    var live = null; // bulle remplie mot à mot (modèle local)
+    askSMA(txt, function (partiel) {
+      if (!live) { typing.remove(); live = bubble("from-deva", ""); }
+      live.textContent = partiel;
+      log.scrollTop = log.scrollHeight;
+    }).then(function (r) {
       typing.remove();
       histo.push({ role: "user", text: txt }, { role: "assistant", text: r.reponse });
       if (histo.length > 12) histo = histo.slice(-12);
-      bubble("from-deva", r.reponse);
+      if (live) live.textContent = r.reponse; else bubble("from-deva", r.reponse);
       if (r.agentLabel) agentTag(r.agentLabel + (local ? ", modèle local" : ""));
       renderActions((r.suggestions || []).map(askAction));
     }).catch(function (e) {
       typing.remove();
+      if (live) live.remove();
       console.warn("[Deva] SMA indisponible, réponse locale :", e && e.message);
       respondLocal(txt);
     });
@@ -268,10 +274,10 @@
     histo.push({ role: "user", text: txt }, { role: "assistant", text: text });
     if (typeof r === "string") say(r); else say(r.text, { actions: r.actions });
   }
-  function askSMA(txt) {
+  function askSMA(txt, onToken) {
     var projet = null;
     try { projet = snapshot ? snapshot() : null; } catch (e) { projet = null; }
-    if (local) return askLocal(txt, projet);
+    if (local) return askLocal(txt, projet, onToken);
     var ctrl = window.AbortController ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, SMA_TIMEOUT);
     return fetch(SMA_URL, {
@@ -288,10 +294,10 @@
     }, function (e) { clearTimeout(timer); throw e; });
   }
   // Le même SMA (sma/worker.js), exécuté dans le navigateur et branché sur Ollama.
-  function askLocal(txt, projet) {
+  function askLocal(txt, projet, onToken) {
     var env = {
-      LLM_API_KEY: "ollama", LLM_BASE_URL: SMA_LOCAL.url, MODEL_AGENT: SMA_LOCAL.modele, MODEL_RAPIDE: SMA_LOCAL.modele,
-      MODE_LEGER: "1", KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href
+      LLM_API_KEY: "ollama", LLM_PROVIDER: "ollama", LLM_BASE_URL: SMA_LOCAL.url, MODEL_AGENT: SMA_LOCAL.modele, MODEL_RAPIDE: SMA_LOCAL.modele,
+      MODE_LEGER: "1", KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href, onToken: onToken
     };
     var body = { question: txt, mode: curMode, page: document.body.dataset.page || "", historique: histo.slice(-4), projet: projet };
     var delai = new Promise(function (_, ko) { setTimeout(function () { ko(new Error("modèle local trop lent")); }, SMA_LOCAL.timeout); });

@@ -18,7 +18,9 @@
  *   KNOWLEDGE_URL    (optionnel) base de connaissances. Défaut : le fichier publié sur GitHub Pages
  *   ALLOWED_ORIGINS  (optionnel) sites autorisés, séparés par des virgules
  *   MODE_LEGER       (optionnel) "1" pour un petit modèle local (Ollama) : orchestrateur et gardien
- *                    par règles, base de connaissances réduite, un seul appel au modèle par question.
+ *                    par règles, seules les connaissances liées à la question, un seul appel au modèle.
+ *   LLM_PROVIDER     (optionnel) "ollama" pour l'API native d'Ollama : modèle gardé en mémoire 30 min,
+ *                    réponse affichée mot à mot (LLM_BASE_URL = http://localhost:11434).
  *
  * Mode local, sans serveur : le site peut aussi importer ce fichier dans le navigateur et appeler
  * repondre() avec Ollama sur la machine (voir sma/README.md, « Modèle local et gratuit »).
@@ -135,6 +137,7 @@ function tranche(K, nom) {
 /* ---------- Appel au modèle (API compatible OpenAI : Groq, Mistral, Gemini, OpenRouter...) ---------- */
 class QuotaError extends Error {}
 async function llm(env, model, messages, opts = {}) {
+  if (env.LLM_PROVIDER === "ollama") return llmOllama(env, model, messages, opts);
   const r = await fetch(conf(env, "LLM_BASE_URL").replace(/\/$/, "") + "/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: "Bearer " + (env.LLM_API_KEY || env.GROQ_API_KEY) },
@@ -147,6 +150,35 @@ async function llm(env, model, messages, opts = {}) {
   if (!r.ok) throw new Error("modèle " + model + " : HTTP " + r.status + " " + (await r.text()).slice(0, 200));
   const j = await r.json();
   return (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
+}
+// API native d'Ollama : contexte suffisant, modèle gardé chargé, flux mot à mot (opts.onToken).
+async function llmOllama(env, model, messages, opts) {
+  const stream = typeof opts.onToken === "function";
+  const r = await fetch(conf(env, "LLM_BASE_URL").replace(/\/(v1)?\/?$/, "") + "/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      model, messages, stream, keep_alive: "30m",
+      options: { temperature: opts.temperature ?? 0.4, num_predict: opts.max_tokens ?? 300, num_ctx: 4096 },
+      ...(opts.json ? { format: "json" } : {})
+    })
+  });
+  if (!r.ok) throw new Error("Ollama " + model + " : HTTP " + r.status + " " + (await r.text()).slice(0, 200));
+  if (!stream) { const j = await r.json(); return (j.message && j.message.content) || ""; }
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  let buf = "", texte = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let n;
+    while ((n = buf.indexOf("\n")) >= 0) {
+      const ligne = buf.slice(0, n).trim(); buf = buf.slice(n + 1);
+      if (!ligne) continue;
+      try { const j = JSON.parse(ligne); if (j.message && j.message.content) { texte += j.message.content; opts.onToken(texte); } } catch (e) { /* ligne incomplète */ }
+    }
+  }
+  return texte;
 }
 // Spécialiste : grand modèle, et repli sur le modèle rapide si le quota du grand est atteint.
 async function llmAgent(env, messages, opts) {
@@ -232,6 +264,35 @@ Réponds uniquement en JSON : {"reponse": "<ta réponse>", "suggestions": ["<que
 Les suggestions sont des questions que l'utilisateur pourrait te poser ensuite (0 à 2, moins de 60 caractères).`;
 }
 
+// Mode léger : on ne garde que les connaissances qui parlent de la question (recherche par mots).
+const VIDES = new Set("pour dans avec mais donc quoi comment est-ce quel quelle quels quelles faire faut veux peux sont cette notre votre leur leurs plus tres bien comme aussi tout tous".split(" "));
+function mots(t) {
+  return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !VIDES.has(w)).map((w) => w.slice(0, 6));
+}
+function pertinents(liste, question, k) {
+  const q = new Set(mots(question));
+  return (liste || []).map((x, i) => ({ x, i, s: mots(JSON.stringify(x)).reduce((n, w) => n + (q.has(w) ? 1 : 0), 0) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i).slice(0, k).map((o) => o.x);
+}
+function promptLeger(K, id, projet, page, question) {
+  const a = AGENTS[id];
+  const faqAgent = a.faq === "toutes" ? K.faq : a.faq.map((i) => K.faq[i]).filter(Boolean);
+  const base = { faq: pertinents(faqAgent.concat(K.faq.slice(0, 3)), question, 3) };
+  const m = K.modes[a.mode] || {};
+  base.conseils = pertinents(m.questionsReponses, question, 2);
+  a.donnees.forEach((d) => {
+    const t = tranche(K, d === "solutions" ? "solutionsCourtes" : d);
+    Object.keys(t).forEach((cle) => { base[cle] = Array.isArray(t[cle]) ? pertinents(t[cle], question, 4) : t[cle]; });
+  });
+  const p = {}; Object.entries(projet || {}).forEach(([k, v]) => { if (v && (!Array.isArray(v) || v.length)) p[k] = v; });
+  return `Tu es Deva, l'assistant d'EVAD (lieux régénératifs, parcours Rêver, Explorer, Générer, Entreprendre, Nourrir). Tu es l'agent « ${a.label} ». ${a.role}
+Règles : tu proposes, le porteur décide. Jamais de chiffre d'impact (CO2, kg, kWh, euros, %) : l'impact se lit dans Vadance et Vadité, grâce aux preuves. Si tu ne sais pas, dis-le sans inventer. Tutoiement, 2 à 4 phrases simples, pas de liste, pas de markdown, en français.
+Connaissances utiles : ${JSON.stringify(base)}
+Page : ${page || "?"}. Projet du porteur : ${JSON.stringify(p)}
+Réponds directement, en texte simple.`;
+}
+
 /* ---------- 3. Gardien ---------- */
 async function garder(env, K, texte, leger) {
   let t = nettoyer(texte);
@@ -281,14 +342,21 @@ export async function repondre(env, body) {
   const leger = String(env.MODE_LEGER || "") === "1";
 
   const agent = leger ? orchestrerRegles(question, mode) : await orchestrer(env, question, mode, historique);
-  const messages = [{ role: "system", content: promptSpecialiste(K, agent, body.projet, court(body.page, 40), leger) }]
-    .concat(historique.map((h) => ({ role: h.role, content: h.text })))
+  const systeme = leger ? promptLeger(K, agent, body.projet, court(body.page, 40), question)
+    : promptSpecialiste(K, agent, body.projet, court(body.page, 40), leger);
+  const messages = [{ role: "system", content: systeme }]
+    .concat(historique.slice(leger ? -2 : -8).map((h) => ({ role: h.role, content: h.text })))
     .concat([{ role: "user", content: question }]);
-  const { texte, modele } = await llmAgent(env, messages, { json: true, max_tokens: leger ? 320 : 450 });
-  const j = lireJSON(texte) || { reponse: texte };
+  const { texte, modele } = await llmAgent(env, messages, leger
+    ? { max_tokens: 220, onToken: env.onToken }
+    : { json: true, max_tokens: 450 });
+  const j = leger ? { reponse: texte } : (lireJSON(texte) || { reponse: texte });
   const garde = await garder(env, K, String(j.reponse || texte), leger);
-  const suggestions = (Array.isArray(j.suggestions) ? j.suggestions : [])
-    .map((s) => nettoyer(String(s)).slice(0, 80)).filter((s) => s && !controler(s).length).slice(0, 2);
+  // Mode léger : les questions de suivi viennent des conseils de l'étape (aucun appel de plus au modèle).
+  const proposees = leger
+    ? pertinents((K.modes[AGENTS[agent].mode] || {}).questionsReponses, question, 3).map((x) => x.q).filter((q) => q !== question)
+    : (Array.isArray(j.suggestions) ? j.suggestions : []);
+  const suggestions = proposees.map((s) => nettoyer(String(s)).slice(0, 80)).filter((s) => s && !controler(s).length).slice(0, 2);
   return { status: 200, data: { reponse: garde.texte, suggestions, agent, agentLabel: AGENTS[agent].label, gardien: garde.corrige ? "corrigé" : "ok", modele } };
 }
 

@@ -48,7 +48,7 @@ Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLED
 
 Le même SMA peut tourner entièrement sur un ordinateur, avec un modèle libre (Qwen 2.5, 3 milliards de paramètres). Rien ne sort de la machine, rien n'est payant. Le fichier `sma/worker.js` est alors chargé directement par le navigateur et appelle Ollama.
 
-En mode local, le SMA passe en mode léger : l'orchestrateur et le gardien fonctionnent par règles (mots-clés, contrôle de doctrine), la base de connaissances envoyée est réduite, et chaque question ne fait qu'un appel au modèle. Sur un ordinateur sans carte graphique dédiée, compter de quelques secondes à une minute par réponse, la première étant la plus lente (chargement du modèle).
+En mode local, le SMA passe en mode léger : l'orchestrateur et le gardien fonctionnent par règles (mots-clés, contrôle de doctrine), seules les connaissances liées à la question sont envoyées au modèle (recherche par mots, environ 3 fois moins de texte), et chaque question ne fait qu'un appel. Le Worker utilise l'API native d'Ollama : le modèle reste chargé 30 minutes et la réponse s'affiche mot à mot. Sur un ordinateur sans carte graphique dédiée, compter de quelques secondes à une minute par réponse, la première étant la plus lente (chargement du modèle).
 
 1. Installer Ollama : https://ollama.com/download
 2. Dans le Terminal :
