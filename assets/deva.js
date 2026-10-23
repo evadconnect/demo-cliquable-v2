@@ -6,6 +6,14 @@
   var mode = null, log = null, root = null, rot = 0;
   var pending = null; // question ouverte : la prochaine saisie lui est transmise
 
+  /* SMA de Deva (système multi-agents, IA). Adresse du Worker Cloudflare : voir sma/README.md.
+     Vide, ou injoignable : Deva répond avec ses règles locales, comme avant. */
+  var SMA_URL = "";
+  var SMA_TIMEOUT = 20000;
+  var histo = [];      // derniers échanges, transmis aux agents pour garder le fil
+  var snapshot = null; // fonction fournie par la page : résumé du projet du porteur
+  var curMode = null;
+
   function uiGet() { try { return JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } }
   function uiSet(v) { try { localStorage.setItem(UI_KEY, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
 
@@ -16,6 +24,7 @@
     root = document.getElementById("deva");
     if (!root) return;
     mode = D.modes[modeId];
+    curMode = modeId;
     var ui = uiGet();
     var narrow = window.matchMedia("(max-width: 900px)").matches;
     // Desktop : sidebar toujours ouverte (pas de rétraction). Mobile : tiroir ouvrable.
@@ -222,10 +231,56 @@
     // repli : on le dit, et on propose trois questions proches
     return { text: pick(D.incompris), actions: suggestions(tokens) };
   }
-  // Répond dans le panneau : une chaîne, ou { text, actions }.
+  // Répond dans le panneau : d'abord le SMA (IA), sinon les règles locales.
   function respond(txt) {
+    if (!SMA_URL || !window.fetch) return respondLocal(txt);
+    var typing = bubble("from-deva is-typing", "");
+    typing.setAttribute("aria-hidden", "true");
+    typing.innerHTML = "<span></span><span></span><span></span>";
+    askSMA(txt).then(function (r) {
+      typing.remove();
+      histo.push({ role: "user", text: txt }, { role: "assistant", text: r.reponse });
+      if (histo.length > 12) histo = histo.slice(-12);
+      bubble("from-deva", r.reponse);
+      if (r.agentLabel) agentTag(r.agentLabel);
+      renderActions((r.suggestions || []).map(askAction));
+    }).catch(function (e) {
+      typing.remove();
+      console.warn("[Deva] SMA indisponible, réponse locale :", e && e.message);
+      respondLocal(txt);
+    });
+  }
+  function respondLocal(txt) {
     var r = answer(txt);
+    var text = typeof r === "string" ? r : r.text;
+    histo.push({ role: "user", text: txt }, { role: "assistant", text: text });
     if (typeof r === "string") say(r); else say(r.text, { actions: r.actions });
+  }
+  function askSMA(txt) {
+    var projet = null;
+    try { projet = snapshot ? snapshot() : null; } catch (e) { projet = null; }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, SMA_TIMEOUT);
+    return fetch(SMA_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question: txt, mode: curMode, page: document.body.dataset.page || "", historique: histo.slice(-8), projet: projet }),
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (res) {
+      clearTimeout(timer);
+      return res.json().then(function (j) {
+        if (!res.ok || !j || !j.reponse) throw new Error((j && j.erreur) || ("HTTP " + res.status));
+        return j;
+      });
+    }, function (e) { clearTimeout(timer); throw e; });
+  }
+  // Petite étiquette sous la bulle : quel agent du SMA a répondu.
+  function agentTag(label) {
+    var d = document.createElement("div");
+    d.className = "deva-agent";
+    d.textContent = "Agent " + label;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
   }
 
   function setOpen(open, silent) {
@@ -300,5 +355,5 @@
     if (t) say(t, { nudge: true });
   }
 
-  window.Deva = { init: init, say: say, react: react, prompt: prompt, close: close, isOpen: isOpen, toggle: toggle, answer: answer, setContext: function (fn) { ctx = fn; } };
+  window.Deva = { init: init, say: say, react: react, prompt: prompt, close: close, isOpen: isOpen, toggle: toggle, answer: answer, setContext: function (fn) { ctx = fn; }, setSnapshot: function (fn) { snapshot = fn; }, sma: function () { return SMA_URL; } };
 })();

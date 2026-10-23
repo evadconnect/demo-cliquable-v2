@@ -5,6 +5,10 @@
 Du rêve à la preuve : carte vivante, le Commun, puis les 5 étapes REGEN (Rêver, Explorer, Générer, Entreprendre, Nourrir).
 HTML, CSS et JavaScript sans framework ni build ; comptes et données sur Supabase, carte OpenStreetMap (Leaflet).
 
+## Deva : système multi-agents
+
+Deva répond aux questions avec une IA organisée en agents : un orchestrateur, un spécialiste par étape (plus le Commun, Mon lieu et un guide général) et un gardien de la doctrine. Tout est gratuit (Groq + Cloudflare Workers) et, sans configuration ou en cas de panne, Deva reprend ses réponses par règles. Mise en service et détails : [`sma/README.md`](sma/README.md).
+
 ## Bêta : comptes et données (Supabase)
 
 - Les comptes sont ceux de Supabase (email + mot de passe), les mêmes que le prototype EVAD.
@@ -40,10 +44,10 @@ Typographie : aucun tiret cadratin (U+2014) ni demi-cadratin (U+2013) dans les t
 grep -rnE "$(printf '\xe2\x80\x94|\xe2\x80\x93')" --include=*.html --include=*.js --include=*.md . && echo "Tirets à corriger" || echo "OK : aucun tiret cadratin"
 ```
 
-Vocabulaire : les mots exclus par la doctrine ne doivent pas apparaître dans l'interface (on dit « projet régénératif », « porteur de projet », « contributeur », « financeur »).
+Vocabulaire : les mots exclus par la doctrine ne doivent pas apparaître dans l'interface (le dossier `sma/` est exclu : le gardien de Deva doit les connaître pour les filtrer) (on dit « projet régénératif », « porteur de projet », « contributeur », « financeur »).
 
 ```bash
-grep -rniE "avantage|récompense|\bgagner\b|contrepartie|monnaie locale|crédits?|\bgraines?\b|vadin|bâtisseur|\bpilote\b|semeur" --include=*.html --include=*.js . || echo "OK : vocabulaire conforme"
+grep -rniE "avantage|récompense|\bgagner\b|contrepartie|monnaie locale|crédits?|\bgraines?\b|vadin|bâtisseur|\bpilote\b|semeur" --include=*.html --include=*.js --exclude-dir=sma . || echo "OK : vocabulaire conforme"
 ```
 
 Le mot « point » se vérifie à la main : il reste acceptable pour la géographie (mais on préfère « marqueur » ou « lieu » dans les textes de Deva), jamais au sens de points à gagner.
@@ -73,7 +77,9 @@ En ligne de commande : `npx vercel` depuis ce dossier.
 | `assets/app.js` | État de la démo (localStorage), barre du haut, carte, logique de chaque écran |
 | `assets/scene.js` | Scène 2.5D isométrique en SVG (bâtiments, solutions posées en gris, ambre ou vert) |
 - `assets/isomap.js` : carte illustrée isométrique de la France (SVG dessiné par règles, sans tuile ni image ; zoom à la molette ou au pincement, déplacement en glissant) ; vue par défaut de l'accueil, la carte OpenStreetMap reste disponible via la bascule « Carte ».
-| `assets/deva.js` | Panneau Deva, réponses scriptées |
+| `assets/deva.js` | Panneau Deva : appelle le SMA (adresse `SMA_URL`), sinon réponses par règles |
+| `sma/worker.js` | SMA de Deva : orchestrateur, agents spécialistes, gardien de la doctrine (Worker Cloudflare, voir `sma/README.md`) |
+| `assets/deva-knowledge.json` | Base de connaissances des agents, générée par `node tools/build-deva-knowledge.mjs` |
 | `assets/styles.css` | Charte graphique (couleurs en variables en haut du fichier) |
 
 ## Bon à savoir

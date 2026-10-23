@@ -1,0 +1,667 @@
+{
+ "version": "2026-10-23",
+ "etapes": [
+  "1. Rêver",
+  "2. Explorer",
+  "3. Générer",
+  "4. Entreprendre",
+  "5. Nourrir"
+ ],
+ "statuts": [
+  "Rêvé",
+  "En cours",
+  "Prouvé"
+ ],
+ "doctrine": {
+  "impact": "Je ne calcule pas l'impact à ta place. Ce que ton lieu change se lit dans Vadance (prévu) et Vadité (vérifié), nourries par tes preuves à l'étape Nourrir.",
+  "regles": [
+   "Deva propose, l'humain décide. Deva ne décide jamais à la place du collectif.",
+   "Deva ne produit JAMAIS de chiffre d'impact (CO2, tonnes, kg, kWh, litres, euros économisés, pourcentages de réduction...). L'impact se lit dans Vadance (prévu) et Vadité (vérifié), nourries par les preuves de terrain.",
+   "Vérifié bat généré : on préfère une solution éprouvée sur le terrain à une idée inventée. Si le Commun n'a pas la réponse, Deva le dit au lieu d'inventer.",
+   "Vocabulaire : on dit « projet régénératif », « porteur de projet », « contributeur », « financeur ». On n'emploie jamais : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur.",
+   "Typographie : jamais de tiret cadratin ni demi-cadratin ; on écrit avec des virgules, des deux-points et des points."
+  ],
+  "carbone": "Estimation. Deva répond localement, par règles, sans IA lourde : son empreinte reste minime. Une requête vers un grand modèle d'IA pèse environ 2 à 5 g CO₂e."
+ },
+ "faq": [
+  {
+   "q": "C'est quoi EVAD ?",
+   "r": "EVAD aide les collectifs à faire pousser des lieux régénératifs, du rêve à la preuve. On rêve un lieu sur la carte, on le modélise, on agit, puis on prouve sur le terrain ce qui a vraiment changé. Et ce qui est vérifié rouvre le rêve des suivants."
+  },
+  {
+   "q": "Comment lire la carte ?",
+   "r": "Chaque marqueur est un lieu : gris s'il est rêvé, ambre s'il est en cours, vert s'il a fait ses preuves. Clique un marqueur pour ouvrir sa fiche, sa maquette et son impact vérifié."
+  },
+  {
+   "q": "C'est quoi le Commun ?",
+   "r": "Le Commun est une bibliothèque libre de solutions éprouvées sur le terrain, reliées à leurs preuves. C'est ouvert à tous, sans compte, et ici vérifié bat généré."
+  },
+  {
+   "q": "Qu'est-ce qu'une preuve ?",
+   "r": "Une preuve, c'est ce que tu apportes depuis le terrain à l'étape Nourrir : une photo, une mesure, une date. Quand c'est confirmé, l'élément passe au vert. C'est ça, la Vadité : l'impact vérifié, pas seulement prévu."
+  },
+  {
+   "q": "Vadance, Vadité, ICI : c'est quoi ?",
+   "r": "La Vadance, c'est l'impact prévu ; la Vadité, l'impact vérifié. Les ICI (indicateurs de changement d'impact) décrivent ce qu'on observe concrètement : vie du sol, liens entre voisins, achats locaux… Je ne calcule jamais ces chiffres à ta place : ils viennent de tes actes validés."
+  },
+  {
+   "q": "Comment créer mon projet ?",
+   "r": "Pour lancer ton projet, clique « Créer mon projet » : tu entres dans le parcours à l'étape Rêver, où tu nommes ton lieu et t'inspires des projets voisins. Prêt ?"
+  },
+  {
+   "q": "Que fait-on à Rêver ?",
+   "r": "Rêver, c'est la 1re étape : tu t'inspires des lieux sur la carte, tu situes ton lieu et tu poses les premiers mots de ta vision."
+  },
+  {
+   "q": "Que fait-on à Explorer ?",
+   "r": "Explorer, c'est la 2e étape : tu découpes ton lieu en espaces (jardin, atelier, café…) et tu y accroches des solutions du Commun."
+  },
+  {
+   "q": "Que fait-on à Générer ?",
+   "r": "Générer, c'est la 3e étape : tu poses tes solutions sur la maquette 2.5D du lieu. Tout ce que tu poses est d'abord prévu, en gris."
+  },
+  {
+   "q": "Que fait-on à Entreprendre ?",
+   "r": "Entreprendre, c'est la 4e étape : chaque solution posée devient une quête, que vous faites avancer ensemble, de « à faire » à « vérifié »."
+  },
+  {
+   "q": "Que fait-on à Nourrir ?",
+   "r": "Nourrir, c'est la 5e étape : tu apportes les preuves de terrain. Chaque preuve fait verdir le lieu, et tu peux en tirer des aperçus pour tes partenaires (ODD, CSRD, PCAET, RSE)."
+  },
+  {
+   "q": "Faut-il un compte ?",
+   "r": "Pas besoin de compte en bêta : tout est ouvert. Clique « Créer mon projet » pour lancer ton lieu tout de suite ; il est gardé sur cet appareil."
+  },
+  {
+   "q": "Qui es-tu, Deva ?",
+   "r": "Je suis Deva, ton assistant sur EVAD, et une IA écologique : je réponds en local, par règles, sans grand modèle d'IA, donc mon empreinte reste minime (~0,05 g CO₂e par question, contre 2 à 5 g pour un gros modèle). Je te guide, je propose, c'est toujours toi qui décides, et je ne m'invente jamais de chiffres d'impact."
+  },
+  {
+   "q": "Quelle est ton empreinte, Deva ?",
+   "r": "Bonne question : nos échanges ont une empreinte, affichée en bas de ce panneau. Comme je réponds localement, par règles, elle reste minime, loin d'une requête vers un gros modèle d'IA."
+  },
+  {
+   "q": "C'est quoi le parcours REGEN ?",
+   "r": "Le parcours REGEN a 5 étapes : Rêver, Explorer, Générer, Entreprendre, Nourrir. On part du rêve, on modélise, on agit, puis on prouve. Et la preuve rouvre le rêve."
+  },
+  {
+   "q": "C'est gratuit ?",
+   "r": "La carte et le Commun sont en accès libre. EVAD est un commun : l'idée n'est pas de vendre, mais de relier des lieux et des preuves."
+  },
+  {
+   "q": "Comment participer ?",
+   "r": "Trois façons d'être dans EVAD : porteur de projet (tu fais naître un lieu), contributeur (tu donnes du temps ou des preuves à un lieu existant), financeur (tu soutiens un lieu prouvé). La bêta couvre surtout le porteur : visite la carte, repère un lieu qui te parle, et contacte son collectif."
+  },
+  {
+   "q": "Y a-t-il des lieux près de chez moi ?",
+   "r": "Sur la carte, « Autour de moi » te géolocalise avec ton accord (rien n'est enregistré) et garde les lieux à moins de 80 km ; sans géolocalisation, il prend la position de ton lieu si tu l'as situé à l'étape Rêver. Sur Rêver, « Des lieux à visiter » te propose aussi les plus proches."
+  },
+  {
+   "q": "Comment publier mon lieu sur la carte ?",
+   "r": "Ton lieu apparaît sur la carte publique quand tu coches « Afficher mon lieu » à l'étape Rêver, qu'il est nommé et situé. Tant que la carte publique n'est pas active, un bandeau te le dit : rien n'est publié à ton insu."
+  },
+  {
+   "q": "Que deviennent mes données ?",
+   "r": "En bêta, ton projet est gardé sur ton appareil, et en ligne si tu as un compte, protégé par ce compte. La carte publique ne montre que le nom, la commune, la promesse et l'avancement, jamais tes preuves détaillées. Pas de traceur publicitaire."
+  },
+  {
+   "q": "Puis-je modifier ou recommencer ?",
+   "r": "Tout se modifie à tout moment : le nom et la promesse à Rêver, les espaces à Explorer, la maquette à Générer. Pour repartir de zéro, vide les données du site dans ton navigateur : ton projet vit sur cet appareil."
+  },
+  {
+   "q": "Combien de temps ça prend ?",
+   "r": "Rêver et Explorer se font en quelques minutes. Générer, le temps de poser tes solutions. Entreprendre et Nourrir suivent le rythme du terrain : des semaines ou des mois, au fil des preuves."
+  },
+  {
+   "q": "Avez-vous des exemples ?",
+   "r": "Les huit lieux marqués « Exemple » sur la carte sont fictifs mais réalistes : clique-en un pour voir sa fiche, sa maquette et les solutions posées. Les lieux verts ont fait leurs preuves."
+  },
+  {
+   "q": "C'est quoi la visite 3D ?",
+   "r": "Visiter ta maquette en 3D dans Luanti arrive bientôt : un monde libre où te promener dans ton lieu avant le premier coup de pioche, pour le montrer aux voisins et aux partenaires."
+  },
+  {
+   "q": "Ça marche sur téléphone ?",
+   "r": "EVAD marche sur téléphone et tablette, dans le navigateur, sans installation. Sans réseau, la carte retombe sur une version simplifiée et ton projet reste consultable : il est gardé sur l'appareil."
+  },
+  {
+   "q": "Quelque chose ne marche pas",
+   "r": "Désolé pour l'accroc. Recharge la page d'abord. Si la carte est vide, regarde le bandeau en haut : la base en ligne est peut-être indisponible. Et dis-nous ce qui coince avec « Donner un retour », en bas du panneau."
+  },
+  {
+   "q": "Qui fait EVAD ?",
+   "r": "EVAD est porté par l'association EVAD Connect. Pour nous écrire : « Donner un retour », en bas du panneau, ou contact@evad.org."
+  },
+  {
+   "q": "Carte, Commun, Mon lieu : quelle différence ?",
+   "r": "La carte montre tous les lieux. Le Commun rassemble les solutions éprouvées. Mon lieu est ton tableau de bord quotidien : ce qu'il y a à faire, les preuves attendues, l'élan de la semaine."
+  },
+  {
+   "q": "Tu peux m'aider ?",
+   "r": "Je peux t'expliquer EVAD, t'aider à lire la carte, à parcourir le Commun, ou te lancer dans la création de ton projet. Par quoi veux-tu commencer ?"
+  }
+ ],
+ "projetExemple": {
+  "nom": "La Friche des Tanneurs",
+  "lieu": "Bords de l'Isle, Dordogne",
+  "promesse": "Un tiers-lieu nourricier où l'on cultive, répare et partage, là où l'on tannait autrefois le cuir.",
+  "collectif": "Collectif de 8 personnes : maraîchère, menuisier, cuisinière, deux voisins retraités, une animatrice, un électricien, une étudiante",
+  "reve": "des familles qui viennent chercher leurs légumes à pied, un atelier où l'on répare au lieu de jeter, et un café où tout le quartier se croise."
+ },
+ "familles": [
+  "Eau",
+  "Sol",
+  "Énergie",
+  "Réemploi",
+  "Alimentation",
+  "Gouvernance"
+ ],
+ "solutions": [
+  {
+   "nom": "Récupération d'eau de pluie",
+   "famille": "Eau",
+   "ceQueCaChange": "Les toits remplissent des cuves : on arrose le jardin sans puiser dans le réseau, même en été.",
+   "difficulte": "faible",
+   "cout": "faible",
+   "eprouveeSurProjets": 14,
+   "nourritLesICI": [
+    "Vie du sol",
+    "Biodiversité accueillie"
+   ],
+   "exempleDePreuve": "Deux cuves raccordées à la gouttière de l'atelier"
+  },
+  {
+   "nom": "Mare pédagogique",
+   "famille": "Eau",
+   "ceQueCaChange": "Un coin d'eau qui attire grenouilles et libellules, et où les écoles viennent observer.",
+   "difficulte": "moyen",
+   "cout": "moyen",
+   "eprouveeSurProjets": 9,
+   "nourritLesICI": [
+    "Biodiversité accueillie",
+    "Liens entre voisins"
+   ],
+   "exempleDePreuve": "Mare creusée, premières libellules observées"
+  },
+  {
+   "nom": "Haie fruitière",
+   "famille": "Sol",
+   "ceQueCaChange": "Une haie de petits fruits qui coupe le vent, abrite les oiseaux et nourrit les passants.",
+   "difficulte": "faible",
+   "cout": "faible",
+   "eprouveeSurProjets": 21,
+   "nourritLesICI": [
+    "Biodiversité accueillie",
+    "Achats faits près d'ici"
+   ],
+   "exempleDePreuve": "Haie plantée sur tout le bord nord avec l'école"
+  },
+  {
+   "nom": "Compost partagé",
+   "famille": "Sol",
+   "ceQueCaChange": "Les voisins déposent leurs épluchures, le jardin récupère un sol vivant.",
+   "difficulte": "faible",
+   "cout": "faible",
+   "eprouveeSurProjets": 26,
+   "nourritLesICI": [
+    "Vie du sol",
+    "Liens entre voisins"
+   ],
+   "exempleDePreuve": "Trois bacs en service, deux référents formés"
+  },
+  {
+   "nom": "Panneaux solaires citoyens",
+   "famille": "Énergie",
+   "ceQueCaChange": "Les habitants financent ensemble une centrale sur le lieu et gardent l'énergie au pays.",
+   "difficulte": "élevé",
+   "cout": "élevé",
+   "eprouveeSurProjets": 7,
+   "nourritLesICI": [
+    "Achats faits près d'ici",
+    "Activités créées sur place"
+   ],
+   "exempleDePreuve": "Centrale posée et raccordée, collectif citoyen constitué"
+  },
+  {
+   "nom": "Four à pain au bois de taille",
+   "famille": "Énergie",
+   "ceQueCaChange": "Le bois des tailles de haies chauffe un four où l'on cuit ensemble le pain du quartier.",
+   "difficulte": "moyen",
+   "cout": "moyen",
+   "eprouveeSurProjets": 6,
+   "nourritLesICI": [
+    "Liens entre voisins",
+    "Achats faits près d'ici"
+   ],
+   "exempleDePreuve": "Première fournée partagée avec le quartier"
+  },
+  {
+   "nom": "Ressourcerie de quartier",
+   "famille": "Réemploi",
+   "ceQueCaChange": "Ce qui allait à la benne trouve une deuxième vie et un petit emploi local se crée.",
+   "difficulte": "moyen",
+   "cout": "moyen",
+   "eprouveeSurProjets": 11,
+   "nourritLesICI": [
+    "Activités créées sur place",
+    "Ouverture à toutes et tous"
+   ],
+   "exempleDePreuve": "Permanence de collecte ouverte chaque mercredi"
+  },
+  {
+   "nom": "Repair café",
+   "famille": "Réemploi",
+   "ceQueCaChange": "Un samedi par mois, on apprend à réparer ensemble grille-pain, vélos et vêtements.",
+   "difficulte": "faible",
+   "cout": "faible",
+   "eprouveeSurProjets": 18,
+   "nourritLesICI": [
+    "Liens entre voisins",
+    "Ouverture à toutes et tous"
+   ],
+   "exempleDePreuve": "Premier repair café tenu, trois bénévoles réparateurs"
+  },
+  {
+   "nom": "Planches de culture en lasagnes",
+   "famille": "Alimentation",
+   "ceQueCaChange": "On cultive sur une ancienne dalle en empilant carton, broyat et compost : pas besoin de bon sol au départ.",
+   "difficulte": "faible",
+   "cout": "faible",
+   "eprouveeSurProjets": 23,
+   "nourritLesICI": [
+    "Vie du sol",
+    "Achats faits près d'ici"
+   ],
+   "exempleDePreuve": "Planches montées, premières salades récoltées"
+  },
+  {
+   "nom": "Poulailler partagé",
+   "famille": "Alimentation",
+   "ceQueCaChange": "Quelques poules mangent les restes, donnent des œufs et un prétexte pour passer tous les jours.",
+   "difficulte": "moyen",
+   "cout": "faible",
+   "eprouveeSurProjets": 8,
+   "nourritLesICI": [
+    "Vie du sol",
+    "Liens entre voisins"
+   ],
+   "exempleDePreuve": "Poulailler habité, planning de soin partagé entre voisins"
+  },
+  {
+   "nom": "Conseil de lieu ouvert",
+   "famille": "Gouvernance",
+   "ceQueCaChange": "Chaque mois, toute personne qui fréquente le lieu peut proposer et décider avec le collectif.",
+   "difficulte": "moyen",
+   "cout": "faible",
+   "eprouveeSurProjets": 12,
+   "nourritLesICI": [
+    "Ouverture à toutes et tous",
+    "Liens entre voisins"
+   ],
+   "exempleDePreuve": "Premier conseil tenu, compte rendu affiché"
+  },
+  {
+   "nom": "Budget participatif du lieu",
+   "famille": "Gouvernance",
+   "ceQueCaChange": "Une part du budget est décidée par les usagers : ils choisissent les prochains chantiers.",
+   "difficulte": "moyen",
+   "cout": "faible",
+   "eprouveeSurProjets": 5,
+   "nourritLesICI": [
+    "Ouverture à toutes et tous",
+    "Activités créées sur place"
+   ],
+   "exempleDePreuve": "Premier vote tenu, projet retenu affiché"
+  }
+ ],
+ "ici": [
+  {
+   "nom": "Vie du sol",
+   "famille": "Écologie",
+   "ceQuOnObserve": "Le sol redevient grumeleux, les vers de terre reviennent, l'eau s'infiltre au lieu de ruisseler."
+  },
+  {
+   "nom": "Biodiversité accueillie",
+   "famille": "Écologie",
+   "ceQuOnObserve": "Oiseaux, insectes et plantes spontanées trouvent refuge sur le lieu, saison après saison."
+  },
+  {
+   "nom": "Liens entre voisins",
+   "famille": "Social",
+   "ceQuOnObserve": "Des personnes qui ne se parlaient pas se retrouvent, s'entraident et reviennent."
+  },
+  {
+   "nom": "Ouverture à toutes et tous",
+   "famille": "Social",
+   "ceQuOnObserve": "Le lieu accueille des publics variés, y compris celles et ceux qu'on n'attendait pas."
+  },
+  {
+   "nom": "Achats faits près d'ici",
+   "famille": "Économie locale",
+   "ceQuOnObserve": "Ce qui est mangé, réparé ou construit vient de plus en plus du territoire proche."
+  },
+  {
+   "nom": "Activités créées sur place",
+   "famille": "Économie locale",
+   "ceQuOnObserve": "De nouvelles activités naissent sur le lieu et font vivre des personnes du coin."
+  }
+ ],
+ "quetes": [
+  {
+   "titre": "Raccorder la gouttière de l'atelier à une cuve",
+   "solution": "Récupération d'eau de pluie",
+   "conseil": "Un après-midi à deux, avec l'électricien pour la pompe."
+  },
+  {
+   "titre": "Creuser la mare en chantier participatif",
+   "solution": "Mare pédagogique",
+   "conseil": "Prévoir bâche, pelles et un goûter pour les voisins."
+  },
+  {
+   "titre": "Planter la haie avec l'école voisine",
+   "solution": "Haie fruitière",
+   "conseil": "Plants à commander en pépinière locale avant novembre."
+  },
+  {
+   "titre": "Installer les bacs et former deux référents",
+   "solution": "Compost partagé",
+   "conseil": "Le syndicat de collecte prête souvent les bacs."
+  },
+  {
+   "titre": "Réunir le collectif citoyen pour le toit solaire",
+   "solution": "Panneaux solaires citoyens",
+   "conseil": "Une réunion publique au café pour ouvrir le projet."
+  },
+  {
+   "titre": "Bâtir le four avec un artisan du coin",
+   "solution": "Four à pain au bois de taille",
+   "conseil": "Deux week-ends de chantier ouvert."
+  },
+  {
+   "titre": "Ouvrir la première permanence de collecte",
+   "solution": "Ressourcerie de quartier",
+   "conseil": "Un créneau fixe, une affiche chez les commerçants."
+  },
+  {
+   "titre": "Lancer le premier repair café du samedi",
+   "solution": "Repair café",
+   "conseil": "Trouver trois bénévoles bricoleurs et une caisse à outils."
+  },
+  {
+   "titre": "Monter les planches de culture sur l'ancienne dalle",
+   "solution": "Planches de culture en lasagnes",
+   "conseil": "Collecter cartons et broyat auprès des voisins."
+  },
+  {
+   "titre": "Tenir le premier conseil de lieu ouvert",
+   "solution": "Conseil de lieu ouvert",
+   "conseil": "Choisir un jour fixe et afficher l'ordre du jour au café."
+  }
+ ],
+ "projets": [
+  {
+   "nom": "Les Serres de Darwin",
+   "lieu": "Rive droite, Bordeaux",
+   "statut": "Prouvé",
+   "promesse": "Des serres abandonnées devenues pépinière urbaine et école du vivant."
+  },
+  {
+   "nom": "Le Moulin des Possibles",
+   "lieu": "Vallée de la Charente",
+   "statut": "En cours",
+   "promesse": "Un moulin qui refait tourner l'eau, le pain et les idées du village."
+  },
+  {
+   "nom": "La Ferme du Bois Joli",
+   "lieu": "Lisière des Landes",
+   "statut": "Prouvé",
+   "promesse": "Une ferme en agroforesterie qui nourrit trois villages et forme de jeunes paysans."
+  },
+  {
+   "nom": "Le Jardin des Mille Mains",
+   "lieu": "Quartier des Aubiers, Limoges",
+   "statut": "En cours",
+   "promesse": "Un jardin au pied des immeubles, cultivé par celles et ceux qui y habitent."
+  },
+  {
+   "nom": "L'Atelier de la Dordogne",
+   "lieu": "Bergerac",
+   "statut": "Rêvé",
+   "promesse": "Un grand atelier partagé pour réparer, fabriquer et transmettre les gestes."
+  },
+  {
+   "nom": "Les Communs de Saint-Sève",
+   "lieu": "Entre-deux-Mers",
+   "statut": "Rêvé",
+   "promesse": "Une ancienne école rendue aux habitants pour décider ensemble de l'avenir du bourg."
+  },
+  {
+   "nom": "La Cour des Semences",
+   "lieu": "Marais poitevin",
+   "statut": "Prouvé",
+   "promesse": "Une grainothèque vivante qui garde les variétés du marais et les partage."
+  },
+  {
+   "nom": "Le Quai des Réparateurs",
+   "lieu": "Port de Pauillac",
+   "statut": "En cours",
+   "promesse": "Un ancien hangar du port où l'on répare vélos, bateaux et objets du quotidien."
+  }
+ ],
+ "espaces": [
+  {
+   "nom": "Jardin nourricier",
+   "solutionsSuggerees": [
+    "Haie fruitière",
+    "Planches de culture en lasagnes",
+    "Récupération d'eau de pluie"
+   ]
+  },
+  {
+   "nom": "Atelier réemploi",
+   "solutionsSuggerees": [
+    "Repair café",
+    "Ressourcerie de quartier",
+    "Panneaux solaires citoyens"
+   ]
+  },
+  {
+   "nom": "Café associatif",
+   "solutionsSuggerees": [
+    "Four à pain au bois de taille",
+    "Compost partagé"
+   ]
+  },
+  {
+   "nom": "Gouvernance partagée",
+   "solutionsSuggerees": [
+    "Conseil de lieu ouvert",
+    "Budget participatif du lieu"
+   ]
+  }
+ ],
+ "exports": [
+  {
+   "titre": "Objectifs de développement durable (ODD)",
+   "intro": "Chaque preuve vérifiée est rattachée aux objectifs qu'elle sert."
+  },
+  {
+   "titre": "CSRD, normes ESRS",
+   "intro": "Pour les partenaires soumis au reporting de durabilité : preuves de terrain rattachées aux thèmes ESRS."
+  },
+  {
+   "titre": "Plan climat territorial (PCAET)",
+   "intro": "Contribution du lieu aux axes du plan climat de la collectivité."
+  },
+  {
+   "titre": "Responsabilité sociétale (RSE)",
+   "intro": "Pour les entreprises partenaires qui soutiennent le lieu."
+  }
+ ],
+ "modes": {
+  "accueil": {
+   "intro": "Bonjour, je suis Deva. Bienvenue sur EVAD. Ici, un monde régénératif désirable est déjà en train de pousser : chaque lieu sur la carte à droite a été rêvé, modélisé, puis prouvé sur le terrain. Du rêve à la preuve, et la preuve rouvre le rêve. Par quoi veux-tu commencer ?",
+   "questionsReponses": [
+    {
+     "q": "C'est quoi EVAD ?",
+     "r": "EVAD accompagne les collectifs qui font pousser des lieux régénératifs : rêver un lieu, le modéliser, agir, puis prouver ce qui a vraiment changé. Ce qui est vérifié nourrit le rêve des suivants."
+    },
+    {
+     "q": "Comment lire la carte ?",
+     "r": "Chaque marqueur est un lieu : gris s'il est rêvé, ambre s'il est en cours, vert s'il a fait ses preuves. Clique un lieu pour voir sa maquette et son impact vérifié."
+    },
+    {
+     "q": "C'est quoi le Commun ?",
+     "r": "Une bibliothèque libre de solutions éprouvées sur le terrain, reliées à leurs preuves. Vérifié bat généré, et tout le monde peut y puiser."
+    },
+    {
+     "q": "Faut-il un compte ?",
+     "r": "Non, tout est ouvert : explore la carte et le Commun, et lance ton propre lieu sans créer de compte. Ton projet est gardé sur cet appareil."
+    }
+   ]
+  },
+  "commun": {
+   "intro": "Voici le Commun : une bibliothèque libre de solutions éprouvées sur le terrain, reliées à leurs preuves. Cherche par mot ou par famille. Si tu as éprouvé quelque chose, propose-le.",
+   "questionsReponses": [
+    {
+     "q": "Comment choisir une solution ?",
+     "r": "Regarde sur combien de projets elle a déjà été éprouvée et quels ICI elle nourrit. Vérifié bat généré."
+    },
+    {
+     "q": "C'est quoi un ICI ?",
+     "r": "Un indicateur de changement d'impact : ce qu'on observe concrètement quand ça marche, comme le retour des vers de terre ou des voisins qui s'entraident."
+    },
+    {
+     "q": "Puis-je proposer une solution ?",
+     "r": "Oui, avec le bouton « Proposer une solution ». La communauté la reliera à ses preuves avant de l'ajouter au Commun."
+    },
+    {
+     "q": "Faut-il un compte ?",
+     "r": "Non, le Commun est libre d'accès. Tu peux tout consulter sans te connecter."
+    }
+   ]
+  },
+  "monlieu": {
+   "intro": "Voici ton lieu au quotidien : ce qu'il y a à faire aujourd'hui, les preuves attendues, et ce qui a avancé cette semaine. Clique un espace de la maquette pour te concentrer dessus.",
+   "questionsReponses": [
+    {
+     "q": "Que faire aujourd'hui ?",
+     "r": "Regarde le bloc Aujourd'hui : d'abord ce qui attend une preuve, puis les quêtes à lancer. Une seule à la fois, c'est déjà bien."
+    },
+    {
+     "q": "Comment lire l'élan de la semaine ?",
+     "r": "Par famille d'ICI, des repères qualitatifs : prévu, en cours, vérifié. Jamais un chiffre d'impact : ce sont tes preuves qui font avancer le lieu."
+    },
+    {
+     "q": "Pourquoi un espace est vide ?",
+     "r": "Aucune solution n'y est posée. Passe par Explorer pour en accrocher une, puis par Générer pour la poser sur la maquette."
+    }
+   ]
+  },
+  "orientation": {
+   "intro": "Bonjour, je suis Deva. On commence par rêver ton lieu. Regarde les projets autour de toi, épingle ceux qui te parlent, puis donne un nom à ton projet.",
+   "questionsReponses": [
+    {
+     "q": "Par où commencer ?",
+     "r": "Clique sur un projet vert de la carte : il a déjà fait ses preuves. Épingle-le s'il ressemble à ce que tu veux faire naître."
+    },
+    {
+     "q": "Comment écrire ma promesse ?",
+     "r": "Une phrase simple, qu'un voisin comprend du premier coup. Dis ce que le lieu change pour les gens, pas ce qu'il contient."
+    },
+    {
+     "q": "Et si je ne sais pas encore ?",
+     "r": "C'est normal. Le rêve se précise en chemin, tu pourras le reprendre à tout moment."
+    },
+    {
+     "q": "Qui peut voir mon projet ?",
+     "r": "Pour l'instant, toi seulement. Tu choisiras plus tard d'ouvrir l'accès au collectif ou au territoire."
+    }
+   ]
+  },
+  "solutions": {
+   "intro": "Découpons ton lieu en espaces, comme tu les vois : nomme-les librement, donne-leur une nature, renomme ou supprime quand tu veux. Puis accroche à chacun des solutions du Commun : elles ont déjà été éprouvées ailleurs.",
+   "questionsReponses": [
+    {
+     "q": "Que proposes-tu pour le jardin ?",
+     "r": "Pour un jardin sur une ancienne dalle, le Commun propose les planches en lasagnes, une haie fruitière et la récupération d'eau de pluie. À toi de choisir."
+    },
+    {
+     "q": "Comment choisir entre deux solutions ?",
+     "r": "Regarde sur combien de projets elles ont été éprouvées, et quels ICI elles nourrissent. Vérifié bat généré."
+    },
+    {
+     "q": "Je ne trouve pas ce que je cherche",
+     "r": "Alors le Commun ne l'a pas encore. Je préfère te le dire plutôt qu'inventer : tu peux proposer ta solution depuis la page Le Commun."
+    },
+    {
+     "q": "C'est quoi un ICI ?",
+     "r": "Un indicateur de changement d'impact : ce qu'on observe concrètement sur le lieu quand ça marche, comme le retour des vers de terre ou des voisins qui s'entraident."
+    }
+   ]
+  },
+  "modelisation": {
+   "intro": "Voici ton lieu en maquette, encore vierge. Dessine d'abord les blocs de chaque espace, case par case, puis glisse tes solutions dessus : elles apparaissent en gris, c'est ce qui est prévu. Certaines prennent plusieurs cases, les haies et les planches s'allongent à ta guise : la taille change le dessin, jamais l'impact. Le décor est libre et ne compte pas non plus.",
+   "questionsReponses": [
+    {
+     "q": "Où poser les panneaux solaires ?",
+     "r": "Une case bien dégagée côté sud, loin des grands arbres, évite l'ombre de l'après-midi. Le bas de la maquette est le plus ensoleillé."
+    },
+    {
+     "q": "Pourquoi tout est gris ?",
+     "r": "Gris veut dire prévu. Ça passera en ambre quand le chantier démarre, et en vert seulement quand une preuve de terrain le confirme."
+    },
+    {
+     "q": "Les jauges bougent toutes seules ?",
+     "r": "Non. Elles ne bougent que quand tu poses une solution. Je ne calcule jamais d'impact à ta place."
+    },
+    {
+     "q": "Je peux changer d'avis ?",
+     "r": "Bien sûr. Clique un élément posé pour le retirer ou le marquer en cours."
+    }
+   ]
+  },
+  "plan": {
+   "intro": "Chaque solution posée devient une quête. Je te propose un premier pas, tu décides si on y va.",
+   "questionsReponses": [
+    {
+     "q": "Par quoi commencer ?",
+     "r": "Par la quête la plus simple et la plus visible : elle donne confiance au collectif et attire les voisins."
+    },
+    {
+     "q": "Comment passer une quête en vérifié ?",
+     "r": "Avec une preuve de terrain : une photo, une mesure, une date. C'est l'étape Nourrir."
+    },
+    {
+     "q": "Et si on bloque ?",
+     "r": "Regarde dans le Commun les projets qui ont déjà éprouvé cette solution : leurs retours sont souvent le meilleur déblocage."
+    },
+    {
+     "q": "Qui fait quoi ?",
+     "r": "Répartissez les quêtes en conseil de lieu. Je peux proposer, c'est le collectif qui décide."
+    }
+   ]
+  },
+  "verification": {
+   "intro": "C'est le moment de prouver. Choisis un élément du lieu, ajoute une photo et une mesure : s'il est confirmé, il passe au vert.",
+   "questionsReponses": [
+    {
+     "q": "Qu'est-ce qu'une bonne preuve ?",
+     "r": "Quelque chose qu'une autre personne peut vérifier : une photo datée, une mesure simple, un témoignage signé."
+    },
+    {
+     "q": "Pourquoi une date ?",
+     "r": "Pour suivre le changement dans le temps. Une preuve datée aide le territoire à reconnaître ce qui a vraiment bougé."
+    },
+    {
+     "q": "À quoi servent les exports ?",
+     "r": "À réutiliser tes preuves pour tes financeurs et partenaires, sans tout réécrire : ODD, CSRD, PCAET, RSE."
+    },
+    {
+     "q": "Que se passe-t-il ensuite ?",
+     "r": "Le projet prouvé passe au vert sur la carte et inspire d'autres collectifs. La preuve rouvre le rêve."
+    }
+   ]
+  }
+ }
+}

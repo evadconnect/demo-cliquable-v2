@@ -2098,6 +2098,27 @@
     return null;
   }
 
+  // Résumé du projet transmis au SMA de Deva, pour des réponses qui tiennent compte du lieu.
+  // Rien de personnel au-delà du projet : ni email, ni identifiant de compte.
+  function devaSnapshot() {
+    var solNom = function (id) { return SOL[id] ? SOL[id].nom : id; };
+    var espNom = function (id) { var x = state.spaces.find(function (e) { return e.id === id; }); return x ? x.nom : ""; };
+    var next = D.steps.find(function (st) { return !stepDone(st.id); });
+    return {
+      prenom: state.prenom || "",
+      nom: state.project.name.trim(), lieu: state.project.lieu || "", promesse: state.project.promesse || "",
+      reve: state.project.reve || "", collectif: state.project.collectif || "",
+      lieuxEpingles: (state.pinned || []).length,
+      espaces: state.spaces.map(function (e) { return e.nom; }),
+      solutionsChoisies: state.chosen.map(function (c) { return solNom(c.solId) + (espNom(c.spaceId) ? " (" + espNom(c.spaceId) + ")" : ""); }),
+      solutionsPosees: state.placed.map(function (p) { return solNom(p.solId) + " : " + ({ prevu: "prévue", encours: "en cours", verifie: "vérifiée" }[p.status] || p.status); }),
+      preuves: state.proofs.length,
+      statut: (D.statuts[projectStatut()] || {}).label,
+      etapesFaites: D.steps.filter(function (st) { return stepDone(st.id); }).map(function (st) { return st.label; }),
+      prochaineEtape: next ? next.label : "toutes faites"
+    };
+  }
+
   /* ================= Démarrage ================= */
   var PAGES = { index: pageIndex, commun: pageCommun, rever: pageRever, explorer: pageExplorer, generer: pageGenerer, entreprendre: pageEntreprendre, nourrir: pageNourrir, monlieu: pageMonLieu };
   // Charge le compte, son projet (en ligne, ou le cache local s'il est plus récent) et les lieux publics.
@@ -2143,6 +2164,7 @@
         else if (step) { Deva.init(step.deva); }
       }
       if (window.Deva && Deva.setContext) Deva.setContext(devaContext);
+      if (window.Deva && Deva.setSnapshot) Deva.setSnapshot(devaSnapshot);
       renderFooter(); // après Deva.init : le bandeau se loge sous le panneau de Deva
       renderTopbar(page); // et le bouton Deva de la pilule connaît l'état du panneau
       // Arrivée depuis l'onboarding : la fenêtre finit de se construire ici.
