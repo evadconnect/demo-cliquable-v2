@@ -11,10 +11,11 @@
  *      pas de tirets cadratins. Il fait réécrire la réponse si besoin, sinon il la remplace.
  *
  * Variables (Cloudflare > Worker > Settings > Variables and Secrets) :
- *   LLM_API_KEY      (secret, obligatoire) clé du fournisseur d'IA, par défaut Groq (gratuit)
- *   LLM_BASE_URL     (optionnel) API compatible OpenAI. Défaut : https://api.groq.com/openai/v1
- *   MODEL_AGENT      (optionnel) modèle des spécialistes. Défaut : llama-3.3-70b-versatile
- *   MODEL_RAPIDE     (optionnel) modèle de l'orchestrateur et du gardien. Défaut : llama-3.1-8b-instant
+ *   LLM_API_KEY      (secret, obligatoire) clé du fournisseur d'IA, par défaut Mistral (européen)
+ *   LLM_BASE_URL     (optionnel) API compatible OpenAI. Défaut : https://api.mistral.ai/v1
+ *                    (Groq : https://api.groq.com/openai/v1, avec llama-3.3-70b-versatile et llama-3.1-8b-instant)
+ *   MODEL_AGENT      (optionnel) modèle des spécialistes. Défaut : mistral-small-latest
+ *   MODEL_RAPIDE     (optionnel) modèle de l'orchestrateur et du gardien. Défaut : ministral-8b-latest
  *   KNOWLEDGE_URL    (optionnel) base de connaissances. Défaut : le fichier publié sur GitHub Pages
  *   ALLOWED_ORIGINS  (optionnel) sites autorisés, séparés par des virgules
  *   MODE_LEGER       (optionnel) "1" pour un petit modèle local (Ollama) : orchestrateur et gardien
@@ -27,9 +28,9 @@
  */
 
 const DEFAUTS = {
-  LLM_BASE_URL: "https://api.groq.com/openai/v1",
-  MODEL_AGENT: "llama-3.3-70b-versatile",
-  MODEL_RAPIDE: "llama-3.1-8b-instant",
+  LLM_BASE_URL: "https://api.mistral.ai/v1",
+  MODEL_AGENT: "mistral-small-latest",
+  MODEL_RAPIDE: "ministral-8b-latest",
   KNOWLEDGE_URL: "https://evadconnect.github.io/demo-cliquable-v2/assets/deva-knowledge.json",
   ALLOWED_ORIGINS: "https://evadconnect.github.io,http://localhost:8790,http://127.0.0.1:8790"
 };
@@ -92,13 +93,21 @@ const AGENT_PAR_MODE = { accueil: "guide", commun: "commun", monlieu: "monlieu",
 const MOTS_EXCLUS = /\b(avantages?|r[ée]compenses?|gagner|gagnez|gagnes|contreparties?|monnaies? locales?|cr[ée]dits?|graines?|vadins?|b[âa]tisseurs?|pilotes?|semeurs?)\b/i;
 const UNITE_IMPACT = /\d[\d\s.,]*\s?(%|pour ?cent|kg|kilos?|tonnes?|t ?co2|t ?co₂|kwh|mwh|gwh|litres?|m3|m³|€|euros?|g ?co2|g ?co₂|co2e|co₂e)(?![a-z])/i;
 const PRES_IMPACT = /(co2|co₂|carbone|[ée]mission|[ée]conomis|r[ée]duction|[ée]vit[ée])[^.!?]{0,50}\d|\d[^.!?]{0,30}(co2|co₂|carbone|[ée]mission)/i;
+const UNITE_SANS_CHIFFRE = /\b(kilos?|kg|tonnes?|kwh|mwh|litres?|m[3³]|euros?|pour ?cent)\b[^.!?]{0,40}(co2|co₂|carbone|[ée]mission|[ée]conomi|r[ée]duction|[ée]vit)|(co2|co₂|carbone|[ée]mission|[ée]conomi|r[ée]duction|[ée]vit)[^.!?]{0,40}\b(kilos?|kg|tonnes?|kwh|mwh|litres?|m[3³]|euros?|pour ?cent)\b/i;
+// Phrase de doctrine quand seul le vocabulaire pose problème (le worker la garde en secours si la base ne l'a pas).
+const VOCABULAIRE = "Chez EVAD, on ne parle pas d'avantages ni de récompenses. On parle de projets régénératifs, de porteurs de projet, de contributeurs et de financeurs : ce qui compte, c'est ce que le lieu change, prouvé sur le terrain.";
 
 function controler(texte) {
   const problemes = [];
-  if (UNITE_IMPACT.test(texte) || PRES_IMPACT.test(texte)) problemes.push("chiffre d'impact");
+  if (UNITE_IMPACT.test(texte) || PRES_IMPACT.test(texte) || UNITE_SANS_CHIFFRE.test(texte)) problemes.push("chiffre d'impact");
   const m = texte.match(MOTS_EXCLUS);
   if (m) problemes.push("mot exclu « " + m[0] + " »");
   return problemes;
+}
+// Réponse de remplacement selon le problème : impact, ou seulement vocabulaire.
+function phraseDoctrine(K, problemes) {
+  if (problemes.some((p) => p.startsWith("chiffre"))) return K.doctrine.impact;
+  return (K.doctrine && K.doctrine.vocabulaire) || VOCABULAIRE;
 }
 function nettoyer(texte) {
   return texte
@@ -298,7 +307,7 @@ async function garder(env, K, texte, leger) {
   let t = nettoyer(texte);
   let problemes = controler(t);
   if (!problemes.length) return { texte: t, corrige: false };
-  if (leger) return { texte: K.doctrine.impact, corrige: true }; // petit modèle : pas de réécriture, règle stricte
+  if (leger) return { texte: phraseDoctrine(K, problemes), corrige: true }; // petit modèle : pas de réécriture, règle stricte
   try {
     const r = await llm(env, conf(env, "MODEL_RAPIDE"), [
       { role: "system", content: "Tu es le gardien de la doctrine d'EVAD. Réécris le texte en gardant son sens et son ton, en corrigeant : " + problemes.join(", ") + ". Aucun chiffre d'impact (CO2, kg, tonnes, kWh, litres, euros, pourcentages) : renvoie plutôt vers les preuves de terrain, Vadance et Vadité. Mots interdits : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur. Réponds uniquement avec le texte réécrit." },
@@ -307,7 +316,7 @@ async function garder(env, K, texte, leger) {
     t = nettoyer(r);
     problemes = controler(t);
   } catch (e) { /* gardien IA indisponible : on applique la règle stricte ci-dessous */ }
-  if (problemes.length) t = K.doctrine.impact;
+  if (problemes.length) t = phraseDoctrine(K, problemes);
   return { texte: t, corrige: true };
 }
 

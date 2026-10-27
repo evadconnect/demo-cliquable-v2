@@ -7,7 +7,7 @@ HTML, CSS et JavaScript sans framework ni build ; comptes et données sur Supaba
 
 ## Deva : système multi-agents
 
-Deva répond aux questions avec une IA organisée en agents : un orchestrateur, un spécialiste par étape (plus le Commun, Mon lieu et un guide général) et un gardien de la doctrine. Tout est gratuit (Groq + Cloudflare Workers) et, sans configuration ou en cas de panne, Deva reprend ses réponses par règles. Mise en service et détails : [`sma/README.md`](sma/README.md).
+Deva répond aux questions avec une IA organisée en agents : un orchestrateur, un spécialiste par étape (plus le Commun, Mon lieu et un guide général) et un gardien de la doctrine. Le modèle est chez Mistral (européen), derrière un Worker Cloudflare qui garde la clé ; sans configuration ou en cas de panne, Deva reprend ses réponses par règles. Mise en service et détails : [`sma/README.md`](sma/README.md).
 
 ## Bêta : comptes et données (Supabase)
 
