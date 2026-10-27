@@ -22,6 +22,17 @@
       return localStorage.getItem("evad-deva-local") === "1";
     } catch (e) { return v === "local"; }
   })();
+  // Quota par navigateur : au-delà, Deva répond par règles jusqu'au lendemain (cadre l'usage, ne protège pas seul).
+  var QUOTA_JOUR = 40;
+  function quotaLu() { try { var q = JSON.parse(localStorage.getItem("evad-deva-quota")) || {}; var d = new Date().toISOString().slice(0, 10); return q.date === d ? q : { date: d, n: 0, dit: false }; } catch (e) { return { date: "", n: 0, dit: false }; } }
+  function quotaEcrit(q) { try { localStorage.setItem("evad-deva-quota", JSON.stringify(q)); } catch (e) { /* ignore */ } }
+  // Compte une question ; renvoie false si le quota du jour est atteint (et le dit une fois).
+  function quotaOk() {
+    var q = quotaLu();
+    if (q.n >= QUOTA_JOUR) { if (!q.dit) { q.dit = true; quotaEcrit(q); return "dire"; } return false; }
+    q.n++; quotaEcrit(q); return true;
+  }
+  var QUOTA_MSG = "J'ai déjà répondu à beaucoup de questions aujourd'hui. Je continue par règles jusqu'à demain, et le reste du site fonctionne comme d'habitude.";
   var histo = [];      // derniers échanges, transmis aux agents pour garder le fil
   var snapshot = null; // fonction fournie par la page : résumé du projet du porteur
   var curMode = null;
@@ -246,6 +257,8 @@
   // Répond dans le panneau : d'abord le SMA (IA), sinon les règles locales.
   function respond(txt) {
     if ((!SMA_URL && !local) || !window.fetch) return respondLocal(txt);
+    var ok = quotaOk();
+    if (ok !== true) { respondLocal(txt); if (ok === "dire") say(QUOTA_MSG, { instant: true }); return; }
     var typing = bubble("from-deva is-typing", "");
     typing.setAttribute("aria-hidden", "true");
     typing.innerHTML = "<span></span><span></span><span></span>";
@@ -266,6 +279,7 @@
       if (live) live.remove();
       console.warn("[Deva] SMA indisponible, réponse locale :", e && e.message);
       respondLocal(txt);
+      if (e && e.quota && e.message !== "quota-minute") { var q = quotaLu(); if (!q.dit) { q.dit = true; q.n = QUOTA_JOUR; quotaEcrit(q); say(QUOTA_MSG, { instant: true }); } }
       // En mode local, la personne attend l'IA : on dit pourquoi elle n'a pas répondu.
       if (local) agentTag(/lent/.test(String(e && e.message)) ? "règles (modèle local trop lent)" : "règles (Ollama injoignable : lancé ? origine autorisée ? page en http://localhost ?)");
     });
@@ -290,6 +304,7 @@
     }).then(function (res) {
       clearTimeout(timer);
       return res.json().then(function (j) {
+        if (res.status === 429 && j && /^quota/.test(j.erreur || "")) { var e = new Error(j.erreur); e.quota = true; throw e; }
         if (!res.ok || !j || !j.reponse) throw new Error((j && j.erreur) || ("HTTP " + res.status));
         return j;
       });

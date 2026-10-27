@@ -42,7 +42,18 @@ Le Worker accepte toute API compatible OpenAI : Groq (`https://api.groq.com/open
 5. Ouvrir l'adresse du Worker (`https://deva-sma.<compte>.workers.dev`) dans le navigateur : on doit lire `"ok":true` et `"cle":true`.
 6. Dans `assets/deva.js`, mettre cette adresse dans `SMA_URL`, puis publier sur GitHub.
 
-Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLEDGE_URL` (par défaut la base publiée sur GitHub Pages), `ALLOWED_ORIGINS` (sites autorisés à appeler le Worker, par défaut GitHub Pages et localhost:8790).
+Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLEDGE_URL` (par défaut la base publiée sur GitHub Pages), `ALLOWED_ORIGINS` (sites autorisés à appeler le Worker, par défaut GitHub Pages et localhost:8790), `QUOTA_IP_MINUTE` (20), `QUOTA_IP_JOUR` (60), `QUOTA_JOUR` (2000).
+
+## Contre les abus : ce qui borne la dépense
+
+Le Worker est public par nature (son adresse est dans la page). Quatre bornes, de la plus importante à la plus souple :
+
+1. **Le plafond de dépense chez Mistral** (console, Usage > Limits) : le vrai filet. S'il est atteint, Mistral coupe, Deva repasse à ses règles, le site continue.
+2. **Le Worker** refuse toute question qui ne vient pas d'une page du site (origine absente ou inconnue : 403), puis applique trois quotas en mémoire : 20 questions par minute et par adresse IP, 60 par jour et par adresse IP, 2 000 par jour au total. Au-delà : 429, et Deva répond par règles. Ces compteurs vivent dans l'instance du Worker, ils sont approximatifs mais suffisent à freiner un script.
+3. **Le navigateur** compte aussi : 40 questions par jour et par appareil, puis Deva prévient et continue par règles jusqu'au lendemain.
+4. En réserve si un abus apparaît : Turnstile (contrôle anti-robot gratuit de Cloudflare, invisible pour les humains).
+
+Pour tester le Worker en ligne de commande, il faut imiter une page du site : `curl -X POST <adresse> -H "Origin: https://evadconnect.github.io" -H "content-type: application/json" -d '{"question":"C'est quoi EVAD ?","mode":"accueil"}'`.
 
 ## Modèle local et gratuit (Ollama), sans serveur ni clé
 

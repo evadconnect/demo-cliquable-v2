@@ -22,6 +22,11 @@
  *                    par règles, seules les connaissances liées à la question, un seul appel au modèle.
  *   LLM_PROVIDER     (optionnel) "ollama" pour l'API native d'Ollama : modèle gardé en mémoire 30 min,
  *                    réponse affichée mot à mot (LLM_BASE_URL = http://localhost:11434).
+ *   QUOTA_IP_MINUTE  (optionnel) questions par minute et par adresse IP. Défaut : 20
+ *   QUOTA_IP_JOUR    (optionnel) questions par jour et par adresse IP. Défaut : 60
+ *   QUOTA_JOUR       (optionnel) questions par jour, toutes personnes confondues. Défaut : 2000
+ *                    Au-delà, le Worker répond 429 et Deva repasse à ses règles. Le vrai filet reste le
+ *                    plafond de dépense posé chez le fournisseur d'IA.
  *
  * Mode local, sans serveur : le site peut aussi importer ce fichier dans le navigateur et appeler
  * repondre() avec Ollama sur la machine (voir sma/README.md, « Modèle local et gratuit »).
@@ -320,20 +325,34 @@ async function garder(env, K, texte, leger) {
   return { texte: t, corrige: true };
 }
 
-/* ---------- Petite protection contre les abus (par instance) ---------- */
+/* ---------- Protection contre les abus (compteurs en mémoire, par instance du Worker) ----------
+   Trois bornes : par minute et par IP, par jour et par IP, et un plafond global par jour.
+   Cloudflare peut faire tourner plusieurs instances : ces bornes sont approximatives, elles cadrent
+   l'usage et freinent un script, elles ne remplacent pas le plafond de dépense chez le fournisseur. */
 const VISITES = new Map();
-function tropDeDemandes(ip) {
-  const now = Date.now(), fen = 60 * 1000, max = 20;
+let JOUR = { date: "", total: 0, parIp: new Map() };
+function aujourdHui() { return new Date().toISOString().slice(0, 10); }
+function tropDeDemandes(env, ip) {
+  const now = Date.now(), fen = 60 * 1000;
+  const maxMin = Number(conf(env, "QUOTA_IP_MINUTE")) || 20, maxIpJour = Number(conf(env, "QUOTA_IP_JOUR")) || 60, maxJour = Number(conf(env, "QUOTA_JOUR")) || 2000;
+  if (JOUR.date !== aujourdHui()) JOUR = { date: aujourdHui(), total: 0, parIp: new Map() };
+  if (JOUR.total >= maxJour) return "quota-jour";
+  if ((JOUR.parIp.get(ip) || 0) >= maxIpJour) return "quota-ip-jour";
   const l = (VISITES.get(ip) || []).filter((t) => now - t < fen);
+  if (l.length >= maxMin) return "quota-minute";
   l.push(now); VISITES.set(ip, l);
   if (VISITES.size > 5000) VISITES.clear();
-  return l.length > max;
+  JOUR.total++; JOUR.parIp.set(ip, (JOUR.parIp.get(ip) || 0) + 1);
+  if (JOUR.parIp.size > 20000) JOUR.parIp.clear();
+  return null;
 }
 
 /* ---------- Serveur ---------- */
 function conf(env, k) { return (env && env[k]) || DEFAUTS[k]; }
+function origines(env) { return conf(env, "ALLOWED_ORIGINS").split(",").map((s) => s.trim()).filter(Boolean); }
+function origineAutorisee(env, origin) { const ok = origines(env); return ok.includes("*") || (!!origin && ok.includes(origin)); }
 function cors(env, origin) {
-  const ok = conf(env, "ALLOWED_ORIGINS").split(",").map((s) => s.trim()).filter(Boolean);
+  const ok = origines(env);
   const allow = ok.includes("*") ? "*" : (ok.includes(origin) ? origin : ok[0]);
   return { "access-control-allow-origin": allow, "access-control-allow-methods": "POST, GET, OPTIONS", "access-control-allow-headers": "content-type", vary: "Origin" };
 }
@@ -375,8 +394,11 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
     if (req.method === "GET") return json({ ok: true, service: "SMA de Deva (EVAD)", agents: Object.keys(AGENTS), cle: !!(env.LLM_API_KEY || env.GROQ_API_KEY) }, 200, h);
     if (req.method !== "POST") return json({ erreur: "méthode non autorisée" }, 405, h);
+    // Seules les pages du site peuvent poser des questions : une origine absente ou inconnue est refusée.
+    if (!origineAutorisee(env, req.headers.get("origin") || "")) return json({ erreur: "origine non autorisée" }, 403, h);
     if (!(env.LLM_API_KEY || env.GROQ_API_KEY)) return json({ erreur: "clé LLM_API_KEY absente" }, 503, h);
-    if (tropDeDemandes(req.headers.get("cf-connecting-ip") || "?")) return json({ erreur: "trop de questions, attends une minute" }, 429, h);
+    const quota = tropDeDemandes(env, req.headers.get("cf-connecting-ip") || "?");
+    if (quota) return json({ erreur: quota, message: quota === "quota-minute" ? "trop de questions, attends une minute" : "quota du jour atteint, Deva répond par règles jusqu'à demain" }, 429, h);
     let body;
     try { body = await req.json(); } catch (e) { return json({ erreur: "JSON invalide" }, 400, h); }
     try {
