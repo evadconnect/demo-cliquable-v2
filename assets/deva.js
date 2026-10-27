@@ -6,8 +6,8 @@
   var mode = null, log = null, root = null, rot = 0;
   var pending = null; // question ouverte : la prochaine saisie lui est transmise
 
-  /* SMA de Deva (système multi-agents, IA). Adresse du Worker Cloudflare : voir sma/README.md.
-     Vide, ou injoignable : Deva répond avec ses règles locales, comme avant. */
+  /* SMA de Deva (système multi-agents, IA). Adresse du Worker Cloudflare (Mistral), voir sma/README.md,
+     par exemple "https://deva-sma.<compte>.workers.dev". Vide, ou injoignable : Deva répond avec ses règles. */
   var SMA_URL = "";
   var SMA_TIMEOUT = 20000;
   /* Mode local : modèle gratuit sur l'ordinateur (Ollama), sans serveur ni clé.
@@ -266,6 +266,8 @@
       if (live) live.remove();
       console.warn("[Deva] SMA indisponible, réponse locale :", e && e.message);
       respondLocal(txt);
+      // En mode local, la personne attend l'IA : on dit pourquoi elle n'a pas répondu.
+      if (local) agentTag(/lent/.test(String(e && e.message)) ? "règles (modèle local trop lent)" : "règles (Ollama injoignable : lancé ? origine autorisée ? page en http://localhost ?)");
     });
   }
   function respondLocal(txt) {

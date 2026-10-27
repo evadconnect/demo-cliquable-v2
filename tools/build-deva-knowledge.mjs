@@ -41,6 +41,7 @@ const K = {
       "Vocabulaire : on dit « projet régénératif », « porteur de projet », « contributeur », « financeur ». On n'emploie jamais : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur.",
       "Typographie : jamais de tiret cadratin ni demi-cadratin ; on écrit avec des virgules, des deux-points et des points."
     ],
+    vocabulaire: "Chez EVAD, on ne parle pas d'avantages ni de récompenses. On parle de projets régénératifs, de porteurs de projet, de contributeurs et de financeurs : ce qui compte, c'est ce que le lieu change, prouvé sur le terrain.",
     carbone: D.deva.carbone && D.deva.carbone.note
   },
   faq: (D.deva.faq || []).map((e) => ({ q: e.q, r: e.a })).filter((e) => e.q),

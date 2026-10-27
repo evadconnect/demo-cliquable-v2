@@ -2105,7 +2105,6 @@
     var espNom = function (id) { var x = state.spaces.find(function (e) { return e.id === id; }); return x ? x.nom : ""; };
     var next = D.steps.find(function (st) { return !stepDone(st.id); });
     return {
-      prenom: state.prenom || "",
       nom: state.project.name.trim(), lieu: state.project.lieu || "", promesse: state.project.promesse || "",
       reve: state.project.reve || "", collectif: state.project.collectif || "",
       lieuxEpingles: (state.pinned || []).length,
