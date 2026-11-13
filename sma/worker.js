@@ -17,6 +17,9 @@
  *   MODEL_AGENT      (optionnel) modèle des spécialistes. Défaut : mistral-small-latest
  *   MODEL_RAPIDE     (optionnel) modèle de l'orchestrateur et du gardien. Défaut : ministral-8b-latest
  *   KNOWLEDGE_URL    (optionnel) base de connaissances. Défaut : le fichier publié sur GitHub Pages
+ *   AGENTS_URL       (optionnel) configuration des agents (sma/agents.json, modifiable sans code dans
+ *                    admin.html). Défaut : le fichier publié sur GitHub Pages, relu toutes les 10 minutes.
+ *                    Injoignable : le Worker garde les agents écrits dans ce fichier.
  *   ALLOWED_ORIGINS  (optionnel) sites autorisés, séparés par des virgules
  *   MODE_LEGER       (optionnel) "1" pour un petit modèle local (Ollama) : orchestrateur et gardien
  *                    par règles, seules les connaissances liées à la question, un seul appel au modèle.
@@ -37,10 +40,13 @@ const DEFAUTS = {
   MODEL_AGENT: "mistral-small-latest",
   MODEL_RAPIDE: "ministral-8b-latest",
   KNOWLEDGE_URL: "https://evadconnect.github.io/demo-cliquable-v2/assets/deva-knowledge.json",
+  AGENTS_URL: "https://evadconnect.github.io/demo-cliquable-v2/sma/agents.json",
   ALLOWED_ORIGINS: "https://evadconnect.github.io,http://localhost:8790,http://127.0.0.1:8790"
 };
 
-/* ---------- Les agents spécialistes ---------- */
+/* ---------- Les agents spécialistes (valeurs de secours) ----------
+   La configuration réelle vient de sma/agents.json, modifiable sans code dans admin.html.
+   Ces valeurs ne servent que si ce fichier est injoignable ou vide. */
 // faq : indices des questions de la FAQ utiles à l'agent (voir assets/deva-knowledge.json).
 const AGENTS = {
   guide: {
@@ -94,6 +100,85 @@ const AGENTS = {
 };
 const AGENT_PAR_MODE = { accueil: "guide", commun: "commun", monlieu: "monlieu", orientation: "reve", solutions: "explorer", modelisation: "generer", plan: "entreprendre", verification: "nourrir" };
 
+/* ---------- Configuration des agents (sma/agents.json) ----------
+   Rôle, objectif, questions rattachées, mots-clés, actif ou non, pause, réglages et budget de chaque agent.
+   S = { tous: {id: agent}, orchestrateur: {...}, gardien: {...} } */
+let CACHE_AGENTS = { s: null, t: 0 };
+const CONSO = { date: "", parAgent: new Map() }; // tokens du jour par agent (en mémoire, approximatif)
+function borne(v, d, min, max) { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; }
+function liste(v) { return Array.isArray(v) ? v.map((x) => String(x || "").trim()).filter(Boolean) : []; }
+function construire(cfg) {
+  const tous = {};
+  (cfg && Array.isArray(cfg.agents) ? cfg.agents : []).forEach((a) => {
+    if (!a || !a.id || !a.label) return;
+    const b = AGENTS[a.id] || {};
+    tous[String(a.id)] = {
+      label: String(a.label),
+      role: String(a.role || b.role || ""),
+      quand: String(a.quand || b.quand || ""),
+      questions: liste(a.questions),
+      motsCles: liste(a.motsCles).map((m) => m.toLowerCase()),
+      mode: AGENT_PAR_MODE[a.mode] ? a.mode : (b.mode || "accueil"),
+      faq: a.faq === "toutes" || Array.isArray(a.faq) ? a.faq : (b.faq || []),
+      donnees: Array.isArray(a.donnees) ? a.donnees : (b.donnees || []),
+      actif: a.actif !== false,
+      pause: !!a.pause,
+      temperature: borne(a.temperature, 0.4, 0, 1),
+      maxTokens: borne(a.maxTokens, 450, 50, 2000),
+      budgetJour: borne(a.budgetJour, 0, 0, 1e9)
+    };
+  });
+  if (!Object.keys(tous).length) Object.entries(AGENTS).forEach(([id, a]) => {
+    tous[id] = { ...a, questions: [], motsCles: [], actif: true, pause: false, temperature: 0.4, maxTokens: 450, budgetJour: 0 };
+  });
+  const o = (cfg && cfg.orchestrateur) || {}, g = (cfg && cfg.gardien) || {};
+  return {
+    tous,
+    orchestrateur: {
+      label: o.label || "Orchestrateur",
+      role: o.role || "Tu es l'orchestrateur du système multi-agents de Deva, l'assistant d'EVAD. Tu choisis UN agent pour répondre.",
+      actif: o.actif !== false && !o.pause,
+      temperature: borne(o.temperature, 0, 0, 1),
+      maxTokens: borne(o.maxTokens, 40, 10, 200)
+    },
+    gardien: {
+      label: g.label || "Gardien",
+      motsExclus: liste(g.motsExclusAjoutes).map((m) => m.toLowerCase()),
+      temperature: borne(g.temperature, 0, 0, 1),
+      maxTokens: borne(g.maxTokens, 450, 50, 2000)
+    }
+  };
+}
+async function systeme(env) {
+  if (env.AGENTS_CONFIG) return construire(env.AGENTS_CONFIG); // tests de l'admin : brouillon pas encore publié
+  if (CACHE_AGENTS.s && Date.now() - CACHE_AGENTS.t < 10 * 60 * 1000) return CACHE_AGENTS.s;
+  try {
+    const r = await fetch(conf(env, "AGENTS_URL"), { cf: { cacheTtl: 300 } });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    CACHE_AGENTS = { s: construire(await r.json()), t: Date.now() };
+  } catch (e) {
+    // Fichier injoignable : on garde la dernière configuration lue, sinon les valeurs de secours.
+    CACHE_AGENTS = { s: CACHE_AGENTS.s || construire(null), t: Date.now() };
+  }
+  return CACHE_AGENTS.s;
+}
+function jourConso() { if (CONSO.date !== aujourdHui()) { CONSO.date = aujourdHui(); CONSO.parAgent = new Map(); } }
+// Agents qui peuvent répondre maintenant : actifs, pas en pause, budget du jour pas dépassé.
+function disponibles(S) {
+  jourConso();
+  const d = {};
+  Object.entries(S.tous).forEach(([id, a]) => {
+    if (a.actif && !a.pause && !(a.budgetJour && (CONSO.parAgent.get(id) || 0) >= a.budgetJour)) d[id] = a;
+  });
+  return d;
+}
+// Agent naturel de la page ; s'il est indisponible : un autre agent de la même page, le Guide, ou le premier disponible.
+function agentDeLaPage(D, mode) {
+  const id = AGENT_PAR_MODE[mode] || "guide";
+  if (D[id]) return id;
+  return Object.keys(D).find((k) => D[k].mode === mode) || (D.guide ? "guide" : Object.keys(D)[0]);
+}
+
 /* ---------- Gardien de la doctrine (règles sans IA) ---------- */
 const MOTS_EXCLUS = /\b(avantages?|r[ée]compenses?|gagner|gagnez|gagnes|contreparties?|monnaies? locales?|cr[ée]dits?|graines?|vadins?|b[âa]tisseurs?|pilotes?|semeurs?)\b/i;
 const UNITE_IMPACT = /\d[\d\s.,]*\s?(%|pour ?cent|kg|kilos?|tonnes?|t ?co2|t ?co₂|kwh|mwh|gwh|litres?|m3|m³|€|euros?|g ?co2|g ?co₂|co2e|co₂e)(?![a-z])/i;
@@ -102,11 +187,14 @@ const UNITE_SANS_CHIFFRE = /\b(kilos?|kg|tonnes?|kwh|mwh|litres?|m[3³]|euros?|p
 // Phrase de doctrine quand seul le vocabulaire pose problème (le worker la garde en secours si la base ne l'a pas).
 const VOCABULAIRE = "Chez EVAD, on ne parle pas d'avantages ni de récompenses. On parle de projets régénératifs, de porteurs de projet, de contributeurs et de financeurs : ce qui compte, c'est ce que le lieu change, prouvé sur le terrain.";
 
-function controler(texte) {
+function controler(texte, ajoutes) {
   const problemes = [];
   if (UNITE_IMPACT.test(texte) || PRES_IMPACT.test(texte) || UNITE_SANS_CHIFFRE.test(texte)) problemes.push("chiffre d'impact");
   const m = texte.match(MOTS_EXCLUS);
   if (m) problemes.push("mot exclu « " + m[0] + " »");
+  const bas = " " + texte.toLowerCase().replace(/[^a-zà-ÿœæ0-9]+/g, " ") + " ";
+  const autre = (ajoutes || []).find((w) => bas.includes(" " + w + " "));
+  if (autre && !m) problemes.push("mot exclu « " + autre + " »");
   return problemes;
 }
 // Réponse de remplacement selon le problème : impact, ou seulement vocabulaire.
@@ -163,6 +251,7 @@ async function llm(env, model, messages, opts = {}) {
   if (r.status === 429) throw new QuotaError("quota atteint pour " + model);
   if (!r.ok) throw new Error("modèle " + model + " : HTTP " + r.status + " " + (await r.text()).slice(0, 200));
   const j = await r.json();
+  compter(opts, j.usage && j.usage.total_tokens);
   return (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "";
 }
 // API native d'Ollama : contexte suffisant, modèle gardé chargé, flux mot à mot (opts.onToken).
@@ -178,7 +267,7 @@ async function llmOllama(env, model, messages, opts) {
     })
   });
   if (!r.ok) throw new Error("Ollama " + model + " : HTTP " + r.status + " " + (await r.text()).slice(0, 200));
-  if (!stream) { const j = await r.json(); return (j.message && j.message.content) || ""; }
+  if (!stream) { const j = await r.json(); compter(opts, (j.prompt_eval_count || 0) + (j.eval_count || 0)); return (j.message && j.message.content) || ""; }
   const reader = r.body.getReader(), dec = new TextDecoder();
   let buf = "", texte = "";
   for (;;) {
@@ -189,11 +278,17 @@ async function llmOllama(env, model, messages, opts) {
     while ((n = buf.indexOf("\n")) >= 0) {
       const ligne = buf.slice(0, n).trim(); buf = buf.slice(n + 1);
       if (!ligne) continue;
-      try { const j = JSON.parse(ligne); if (j.message && j.message.content) { texte += j.message.content; opts.onToken(texte); } } catch (e) { /* ligne incomplète */ }
+      try {
+        const j = JSON.parse(ligne);
+        if (j.message && j.message.content) { texte += j.message.content; opts.onToken(texte); }
+        if (j.done) compter(opts, (j.prompt_eval_count || 0) + (j.eval_count || 0));
+      } catch (e) { /* ligne incomplète */ }
     }
   }
   return texte;
 }
+// Consommation : chaque appel ajoute ses tokens au compteur de la question (opts.usage).
+function compter(opts, n) { if (opts && opts.usage) { opts.usage.appels++; opts.usage.tokens += Number(n) || 0; } }
 // Spécialiste : grand modèle, et repli sur le modèle rapide si le quota du grand est atteint.
 async function llmAgent(env, messages, opts) {
   try { return { texte: await llm(env, conf(env, "MODEL_AGENT"), messages, opts), modele: conf(env, "MODEL_AGENT") }; }
@@ -210,22 +305,22 @@ function lireJSON(t) {
 }
 
 /* ---------- 1. Orchestrateur ---------- */
-async function orchestrer(env, question, mode, historique) {
-  const parDefaut = AGENT_PAR_MODE[mode] || "guide";
-  const liste = Object.entries(AGENTS).map(([id, a]) => `- ${id} : ${a.quand}`).join("\n");
+async function orchestrer(env, S, D, question, mode, historique, usage) {
+  const parDefaut = agentDeLaPage(D, mode);
+  const agents = Object.entries(D).map(([id, a]) => `- ${id} : ${a.quand}` + (a.questions.length ? ` (exemples : ${a.questions.slice(0, 4).join(" / ")})` : "")).join("\n");
   const contexte = historique.slice(-2).map((h) => (h.role === "user" ? "Utilisateur : " : "Deva : ") + h.text).join("\n");
-  const sys = `Tu es l'orchestrateur du système multi-agents de Deva, l'assistant d'EVAD. Tu choisis UN agent pour répondre.
+  const sys = `${S.orchestrateur.role}
 Agents :
-${liste}
+${agents}
 L'utilisateur est sur la page « ${mode} » (agent naturel de cette page : ${parDefaut}). En cas de doute, choisis ${parDefaut}.
 Réponds uniquement en JSON : {"agent": "<id>"}`;
   try {
     const t = await llm(env, conf(env, "MODEL_RAPIDE"), [
       { role: "system", content: sys },
       { role: "user", content: (contexte ? "Échange précédent :\n" + contexte + "\n\n" : "") + "Question : " + question }
-    ], { json: true, temperature: 0, max_tokens: 40 });
+    ], { json: true, temperature: S.orchestrateur.temperature, max_tokens: S.orchestrateur.maxTokens, usage });
     const j = lireJSON(t);
-    if (j && AGENTS[j.agent]) return j.agent;
+    if (j && D[j.agent]) return j.agent;
   } catch (e) { /* orchestrateur indisponible : on garde l'agent de la page */ }
   return parDefaut;
 }
@@ -241,17 +336,19 @@ const MOTS_AGENTS = {
   monlieu: /(o[uù] j.en suis|mon tableau|aujourd.hui|r[ée]sum[ée]|prochaine [ée]tape|mon lieu)/,
   guide: /(evad|compte|donn[ée]es|gratuit|t[ée]l[ée]phone|carte|qui es.tu|marche pas|bug)/
 };
-function orchestrerRegles(question, mode) {
-  const parDefaut = AGENT_PAR_MODE[mode] || "guide";
+// Mots-clés ajoutés dans l'admin (motsCles) : s'ajoutent aux règles écrites ici, et servent aux nouveaux agents.
+function orchestrerRegles(D, question, mode) {
+  const parDefaut = agentDeLaPage(D, mode);
   const t = question.toLowerCase();
-  if (MOTS_AGENTS[parDefaut] && MOTS_AGENTS[parDefaut].test(t)) return parDefaut;
-  for (const [id, rx] of Object.entries(MOTS_AGENTS)) if (rx.test(t)) return id;
+  const touche = (id) => (MOTS_AGENTS[id] && MOTS_AGENTS[id].test(t)) || D[id].motsCles.some((m) => t.includes(m));
+  if (touche(parDefaut)) return parDefaut;
+  const ordre = Object.keys(MOTS_AGENTS).filter((id) => D[id]).concat(Object.keys(D).filter((id) => !MOTS_AGENTS[id]));
+  for (const id of ordre) if (touche(id)) return id;
   return parDefaut;
 }
 
 /* ---------- 2. Spécialiste ---------- */
-function promptSpecialiste(K, id, projet, page, leger) {
-  const a = AGENTS[id];
+function promptSpecialiste(K, a, projet, page, leger) {
   let faq = a.faq === "toutes" ? K.faq : a.faq.map((i) => K.faq[i]).filter(Boolean);
   if (leger && a.faq === "toutes") faq = K.faq.slice(5, 22);
   const donnees = leger ? a.donnees.map((d) => (d === "solutions" ? "solutionsCourtes" : d)) : a.donnees;
@@ -289,8 +386,7 @@ function pertinents(liste, question, k) {
   return (liste || []).map((x, i) => ({ x, i, s: mots(JSON.stringify(x)).reduce((n, w) => n + (q.has(w) ? 1 : 0), 0) }))
     .sort((a, b) => b.s - a.s || a.i - b.i).slice(0, k).map((o) => o.x);
 }
-function promptLeger(K, id, projet, page, question) {
-  const a = AGENTS[id];
+function promptLeger(K, a, projet, page, question) {
   const faqAgent = a.faq === "toutes" ? K.faq : a.faq.map((i) => K.faq[i]).filter(Boolean);
   const base = { faq: pertinents(faqAgent.concat(K.faq.slice(0, 3)), question, 3) };
   const m = K.modes[a.mode] || {};
@@ -308,18 +404,19 @@ Réponds directement, en texte simple.`;
 }
 
 /* ---------- 3. Gardien ---------- */
-async function garder(env, K, texte, leger) {
+async function garder(env, K, S, texte, leger, usage) {
+  const ajoutes = S.gardien.motsExclus;
   let t = nettoyer(texte);
-  let problemes = controler(t);
+  let problemes = controler(t, ajoutes);
   if (!problemes.length) return { texte: t, corrige: false };
   if (leger) return { texte: phraseDoctrine(K, problemes), corrige: true }; // petit modèle : pas de réécriture, règle stricte
   try {
     const r = await llm(env, conf(env, "MODEL_RAPIDE"), [
-      { role: "system", content: "Tu es le gardien de la doctrine d'EVAD. Réécris le texte en gardant son sens et son ton, en corrigeant : " + problemes.join(", ") + ". Aucun chiffre d'impact (CO2, kg, tonnes, kWh, litres, euros, pourcentages) : renvoie plutôt vers les preuves de terrain, Vadance et Vadité. Mots interdits : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur. Réponds uniquement avec le texte réécrit." },
+      { role: "system", content: "Tu es le gardien de la doctrine d'EVAD. Réécris le texte en gardant son sens et son ton, en corrigeant : " + problemes.join(", ") + ". Aucun chiffre d'impact (CO2, kg, tonnes, kWh, litres, euros, pourcentages) : renvoie plutôt vers les preuves de terrain, Vadance et Vadité. Mots interdits : avantage, récompense, gagner, contrepartie, monnaie locale, crédit, graine, vadin, bâtisseur, pilote, semeur" + (ajoutes.length ? ", " + ajoutes.join(", ") : "") + ". Réponds uniquement avec le texte réécrit." },
       { role: "user", content: t }
-    ], { temperature: 0, max_tokens: 450 });
+    ], { temperature: S.gardien.temperature, max_tokens: S.gardien.maxTokens, usage });
     t = nettoyer(r);
-    problemes = controler(t);
+    problemes = controler(t, ajoutes);
   } catch (e) { /* gardien IA indisponible : on applique la règle stricte ci-dessous */ }
   if (problemes.length) t = phraseDoctrine(K, problemes);
   return { texte: t, corrige: true };
@@ -367,32 +464,47 @@ export async function repondre(env, body) {
     .filter((h) => h && (h.role === "user" || h.role === "assistant"))
     .map((h) => ({ role: h.role, text: court(h.text, 600) }));
   const K = await connaissances(env);
+  const S = await systeme(env);
   const leger = String(env.MODE_LEGER || "") === "1";
+  const usage = { tokens: 0, appels: 0 };
 
-  const agent = leger ? orchestrerRegles(question, mode) : await orchestrer(env, question, mode, historique);
-  const systeme = leger ? promptLeger(K, agent, body.projet, court(body.page, 40), question)
-    : promptSpecialiste(K, agent, body.projet, court(body.page, 40), leger);
-  const messages = [{ role: "system", content: systeme }]
+  // Choix de l'agent. FORCE_AGENT ne vient que de l'admin (tests d'un agent seul), jamais d'une requête.
+  const D = disponibles(S);
+  let agent, routage;
+  if (env.FORCE_AGENT && S.tous[env.FORCE_AGENT]) { agent = env.FORCE_AGENT; routage = "test direct"; }
+  else if (!Object.keys(D).length) return { status: 503, data: { erreur: "aucun agent disponible" } };
+  else if (!S.orchestrateur.actif) { agent = agentDeLaPage(D, mode); routage = "orchestrateur en pause : agent de la page"; }
+  else if (leger) { agent = orchestrerRegles(D, question, mode); routage = "règles"; }
+  else { agent = await orchestrer(env, S, D, question, mode, historique, usage); routage = "IA"; }
+  const A = S.tous[agent];
+  const prompt = leger ? promptLeger(K, A, body.projet, court(body.page, 40), question)
+    : promptSpecialiste(K, A, body.projet, court(body.page, 40), leger);
+  const messages = [{ role: "system", content: prompt }]
     .concat(historique.slice(leger ? -2 : -8).map((h) => ({ role: h.role, content: h.text })))
     .concat([{ role: "user", content: question }]);
   const { texte, modele } = await llmAgent(env, messages, leger
-    ? { max_tokens: 220, onToken: env.onToken }
-    : { json: true, max_tokens: 450 });
+    ? { max_tokens: Math.min(A.maxTokens, 220), temperature: A.temperature, onToken: env.onToken, usage }
+    : { json: true, max_tokens: A.maxTokens, temperature: A.temperature, usage });
   const j = leger ? { reponse: texte } : (lireJSON(texte) || { reponse: texte });
-  const garde = await garder(env, K, String(j.reponse || texte), leger);
+  const garde = await garder(env, K, S, String(j.reponse || texte), leger, usage);
+  jourConso();
+  CONSO.parAgent.set(agent, (CONSO.parAgent.get(agent) || 0) + usage.tokens);
   // Mode léger : les questions de suivi viennent des conseils de l'étape (aucun appel de plus au modèle).
   const proposees = leger
-    ? pertinents((K.modes[AGENTS[agent].mode] || {}).questionsReponses, question, 3).map((x) => x.q).filter((q) => q !== question)
+    ? pertinents((K.modes[A.mode] || {}).questionsReponses, question, 3).map((x) => x.q).filter((q) => q !== question)
     : (Array.isArray(j.suggestions) ? j.suggestions : []);
-  const suggestions = proposees.map((s) => nettoyer(String(s)).slice(0, 80)).filter((s) => s && !controler(s).length).slice(0, 2);
-  return { status: 200, data: { reponse: garde.texte, suggestions, agent, agentLabel: AGENTS[agent].label, gardien: garde.corrige ? "corrigé" : "ok", modele } };
+  const suggestions = proposees.map((s) => nettoyer(String(s)).slice(0, 80)).filter((s) => s && !controler(s, S.gardien.motsExclus).length).slice(0, 2);
+  return { status: 200, data: { reponse: garde.texte, suggestions, agent, agentLabel: A.label, gardien: garde.corrige ? "corrigé" : "ok", modele, routage, usage } };
 }
 
 export default {
   async fetch(req, env) {
     const h = cors(env, req.headers.get("origin") || "");
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
-    if (req.method === "GET") return json({ ok: true, service: "SMA de Deva (EVAD)", agents: Object.keys(AGENTS), cle: !!(env.LLM_API_KEY || env.GROQ_API_KEY) }, 200, h);
+    if (req.method === "GET") {
+      const S = await systeme(env), D = disponibles(S);
+      return json({ ok: true, service: "SMA de Deva (EVAD)", agents: Object.keys(S.tous), disponibles: Object.keys(D), cle: !!(env.LLM_API_KEY || env.GROQ_API_KEY) }, 200, h);
+    }
     if (req.method !== "POST") return json({ erreur: "méthode non autorisée" }, 405, h);
     // Seules les pages du site peuvent poser des questions : une origine absente ou inconnue est refusée.
     if (!origineAutorisee(env, req.headers.get("origin") || "")) return json({ erreur: "origine non autorisée" }, 403, h);

@@ -273,6 +273,8 @@
       if (histo.length > 12) histo = histo.slice(-12);
       if (live) live.textContent = r.reponse; else bubble("from-deva", r.reponse);
       if (r.agentLabel) agentTag(r.agentLabel + (local ? ", modèle local" : ""));
+      // Consommation de tokens par agent, pour la page d'administration (sans texte ni identité).
+      if (r.usage && window.EvadDB && window.EvadDB.logUsage) window.EvadDB.logUsage(r.agent, r.usage.tokens, local ? "local" : (r.modele || ""));
       renderActions((r.suggestions || []).map(askAction));
     }).catch(function (e) {
       typing.remove();
@@ -314,7 +316,8 @@
   function askLocal(txt, projet, onToken) {
     var env = {
       LLM_API_KEY: "ollama", LLM_PROVIDER: "ollama", LLM_BASE_URL: SMA_LOCAL.url, MODEL_AGENT: SMA_LOCAL.modele, MODEL_RAPIDE: SMA_LOCAL.modele,
-      MODE_LEGER: "1", KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href, onToken: onToken
+      MODE_LEGER: "1", KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href,
+      AGENTS_URL: new URL("sma/agents.json", location.href).href, onToken: onToken
     };
     var body = { question: txt, mode: curMode, page: document.body.dataset.page || "", historique: histo.slice(-4), projet: projet };
     var delai = new Promise(function (_, ko) { setTimeout(function () { ko(new Error("modèle local trop lent")); }, SMA_LOCAL.timeout); });

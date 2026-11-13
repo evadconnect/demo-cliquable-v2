@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Deva · Administration du SMA</title>
+<style>
+  :root{
+    --bg:#f6f5f1; --panel:#fff; --ink:#1f2a24; --muted:#6b756f; --line:#e3e1da;
+    --green:#2f6b4f; --green-soft:#e4efe8; --amber:#a86a12; --amber-soft:#fbf1df;
+    --red:#b23b3b; --red-soft:#f8e3e3; --blue:#2e5c8a; --blue-soft:#e3ecf5; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0;font-weight:650}
+  header .sub{color:var(--muted);font-size:13px}
+  header .spacer{flex:1}
+  .etat-pub{font-size:12.5px;padding:4px 10px;border-radius:20px;font-weight:600}
+  .etat-pub.ok{background:var(--green-soft);color:var(--green)}
+  .etat-pub.modif{background:var(--amber-soft);color:var(--amber)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .stat .v{font-size:22px;font-weight:650}
+  .stat .l{color:var(--muted);font-size:12px;margin-top:2px}
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px 24px 32px;align-items:start}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  .list-head{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--line)}
+  .list-head input{flex:1}
+  .agent-list{max-height:calc(100vh - 250px);overflow:auto}
+  .groupe{padding:10px 14px 4px;font-size:11.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .agent-item{padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .agent-item:hover{background:#faf9f6}
+  .agent-item.sel{background:var(--green-soft);box-shadow:inset 3px 0 0 var(--green)}
+  .agent-item .row{display:flex;align-items:center;gap:8px}
+  .agent-item .name{font-weight:600;flex:1}
+  .agent-item .type{color:var(--muted);font-size:12px;margin-top:2px}
+  .bar{height:5px;background:#eeece6;border-radius:3px;margin-top:8px;overflow:hidden}
+  .bar>span{display:block;height:100%;background:var(--green)}
+  .bar>span.warn{background:var(--amber)} .bar>span.over{background:var(--red)}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .b-on{background:var(--green-soft);color:var(--green)}
+  .b-pause{background:var(--amber-soft);color:var(--amber)}
+  .b-off{background:#eceae4;color:var(--muted)}
+  .b-fixe{background:var(--blue-soft);color:var(--blue)}
+  .tabs{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--line)}
+  .tab{padding:9px 14px;border:none;background:none;cursor:pointer;font:inherit;color:var(--muted);border-bottom:2px solid transparent}
+  .tab.active{color:var(--ink);border-bottom-color:var(--green);font-weight:600}
+  .content{padding:18px 20px}
+  .detail-head{display:flex;align-items:center;gap:10px;padding:16px 20px 0;flex-wrap:wrap}
+  .detail-head h2{margin:0;font-size:18px;flex:1}
+  label{display:block;font-weight:600;font-size:12.5px;margin:14px 0 5px}
+  .hint{font-weight:400;color:var(--muted);font-size:12.5px}
+  input[type=text],input[type=number],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+  textarea{resize:vertical;min-height:70px}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px}
+  .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit;font-weight:550;color:var(--ink)}
+  .btn:hover{background:#f3f2ee}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.primary:hover{background:#265a42}
+  .btn.danger{color:var(--red);border-color:#e9c6c6}
+  .btn.warn{color:var(--amber);border-color:#ecd6ae}
+  .btn.small{padding:5px 10px;font-size:12.5px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .actions{display:flex;gap:8px;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+  .switches{display:flex;gap:24px;margin-top:6px;flex-wrap:wrap}
+  .switch{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;margin:0;font-size:14px}
+  .switch input{width:16px;height:16px;accent-color:var(--green)}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:6px}
+  .checks .switch{font-size:13px}
+  .faq-box{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px}
+  .faq-box .switch{font-size:13px;margin:3px 0;align-items:flex-start}
+  .chips{display:flex;flex-direction:column;gap:6px}
+  .chip{display:flex;gap:8px;align-items:center}
+  .chip input{flex:1}
+  .section-title{font-size:13px;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:24px 0 4px}
+  .section-title:first-child{margin-top:0}
+  .result{margin-top:16px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .result .meta{display:flex;flex-wrap:wrap;gap:14px;padding:10px 14px;background:#faf9f6;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  .result .meta b{color:var(--ink)}
+  .result .answer{padding:14px;white-space:pre-wrap;line-height:1.55}
+  .result .eval{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  .ok{color:var(--green);font-weight:600} .ko{color:var(--red);font-weight:600}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:420px}
+  .toast.show{opacity:1}
+  .err{background:var(--red-soft);color:var(--red);padding:10px 14px;border-radius:8px;margin-top:12px;white-space:pre-wrap}
+  .info{background:var(--blue-soft);color:var(--blue);padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5}
+  .warnbox{background:var(--amber-soft);color:var(--amber);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px}
+  .modal{position:fixed;inset:0;background:rgba(20,30,25,.35);display:none;align-items:center;justify-content:center;z-index:30}
+  .modal.open{display:flex}
+  .modal .box{background:#fff;border-radius:12px;width:min(600px,92vw);max-height:90vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+  .modal h3{margin:0 0 4px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.checks{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Deva · Administration du SMA</h1>
+    <div class="sub">Modifier, tester et piloter les agents sans toucher au code</div>
+  </div>
+  <span class="etat-pub ok" id="etatPub">À jour</span>
+  <div class="spacer"></div>
+  <button class="btn" id="btnReglages">Réglages</button>
+  <button class="btn" id="btnAnnulerTout">Annuler les modifications</button>
+  <button class="btn" id="btnTelecharger">Télécharger agents.json</button>
+  <button class="btn primary" id="btnPublier">Publier sur le site</button>
+</header>
+
+<section class="stats" id="stats"></section>
+
+<main class="layout">
+  <aside class="panel">
+    <div class="list-head">
+      <input type="text" id="search" placeholder="Rechercher un agent…">
+      <button class="btn primary small" id="btnNew">+ Agent</button>
+    </div>
+    <div class="agent-list" id="agentList"></div>
+  </aside>
+  <section class="panel" id="detail"><div class="empty"><span class="spin"></span> Chargement…</div></section>
+</main>
+
+<!-- Réglages -->
+<div class="modal" id="mReglages"><div class="box"><div class="content">
+  <h3>Réglages</h3>
+  <div class="hint">Enregistrés seulement dans ce navigateur.</div>
+
+  <div class="section-title">Publication sur GitHub</div>
+  <div class="info">Publier enregistre <b>sma/agents.json</b> dans le dépôt. Le site et le Worker relisent ce fichier : les changements sont en ligne en 10 minutes environ, sans toucher au code. Chaque publication est gardée dans l'historique GitHub, on peut donc revenir en arrière.</div>
+  <label>Jeton GitHub <span class="hint">(jeton « fine-grained » avec l'accès Contents : Read and write sur ce dépôt uniquement)</span></label>
+  <input type="password" id="rToken" placeholder="github_pat_…" autocomplete="off">
+  <div class="grid3">
+    <div><label>Compte</label><input type="text" id="rOwner"></div>
+    <div><label>Dépôt</label><input type="text" id="rRepo"></div>
+    <div><label>Branche</label><input type="text" id="rBranch"></div>
+  </div>
+
+  <div class="section-title">Modèle utilisé pour les tests</div>
+  <label>Fournisseur</label>
+  <select id="rProvider">
+    <option value="ollama">Ollama sur cet ordinateur (gratuit)</option>
+    <option value="openai">API compatible OpenAI (Mistral, Groq…)</option>
+  </select>
+  <div id="rOllama">
+    <div class="grid2">
+      <div><label>Adresse d'Ollama</label><input type="text" id="rOllamaUrl"></div>
+      <div><label>Modèle</label><input type="text" id="rOllamaModel"></div>
+    </div>
+  </div>
+  <div id="rOpenai">
+    <label>Adresse de l'API</label><input type="text" id="rApiUrl">
+    <label>Clé <span class="hint">(gardée dans ce navigateur, jamais publiée)</span></label><input type="password" id="rApiKey" autocomplete="off">
+    <div class="grid2">
+      <div><label>Modèle des agents</label><input type="text" id="rModelAgent"></div>
+      <div><label>Modèle rapide (orchestrateur, gardien)</label><input type="text" id="rModelRapide"></div>
+    </div>
+  </div>
+  <div class="actions" style="justify-content:flex-end">
+    <button class="btn" data-close="mReglages">Annuler</button>
+    <button class="btn primary" id="rSave">Enregistrer</button>
+  </div>
+</div></div></div>
+
+<!-- Publication -->
+<div class="modal" id="mPublier"><div class="box"><div class="content">
+  <h3>Publier les modifications</h3>
+  <div class="hint">Ce qui va changer sur le site :</div>
+  <div id="pResume" style="margin-top:10px"></div>
+  <label>Message pour l'historique <span class="hint">(facultatif)</span></label>
+  <input type="text" id="pMessage" placeholder="Ex. : Explorer plus court, nouvel agent Eau">
+  <div id="pErr"></div>
+  <div class="actions" style="justify-content:flex-end">
+    <button class="btn" data-close="mPublier">Annuler</button>
+    <button class="btn primary" id="pGo">Publier</button>
+  </div>
+</div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/backend.js"></script>
+<script>
+(function () {
+"use strict";
+
+/* =========================================================
+   Page d'administration du SMA de Deva.
+   Source de vérité : sma/agents.json (lu par sma/worker.js en ligne et en local).
+   - Modifier : brouillon gardé dans ce navigateur tant qu'il n'est pas publié.
+   - Publier : écrit sma/agents.json dans le dépôt GitHub (API GitHub, jeton personnel).
+   - Tester : exécute le vrai SMA (sma/worker.js) dans le navigateur avec le brouillon.
+   - Consommation : tests faits ici + usage réel du site (Supabase, supabase/deva-usage.sql).
+   ========================================================= */
+
+var PAGES = {
+  accueil: "Accueil et carte", commun: "Le Commun", monlieu: "Mon lieu", orientation: "Rêver",
+  solutions: "Explorer", modelisation: "Générer", plan: "Entreprendre", verification: "Nourrir"
+};
+var DONNEES = {
+  projets: "Lieux existants", projetExemple: "Projet exemple", espaces: "Espaces types",
+  solutions: "Solutions du Commun (détail)", solutionsCourtes: "Solutions du Commun (résumé)",
+  familles: "Familles de solutions", quetes: "Quêtes", ici: "Indicateurs ICI",
+  preuvesExemples: "Exemples de preuves", exports: "Exports (ODD, CSRD…)"
+};
+var ORCH = "_orchestrateur", GARD = "_gardien";
+
+/* ---------- petits outils ---------- */
+var $ = function (s) { return document.querySelector(s); };
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function fmt(n) { return Number(n || 0).toLocaleString("fr-FR"); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } },
+  del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+};
+function toast(msg) {
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove("show"); }, 2800);
+}
+function slug(s) {
+  return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "agent";
+}
+function aujourdhui() { return new Date().toISOString().slice(0, 10); }
+
+/* ---------- état ---------- */
+var reglages = Object.assign({
+  token: "", owner: "evadconnect", repo: "demo-cliquable-v2", branch: "main",
+  provider: "ollama", ollamaUrl: "http://localhost:11434", ollamaModel: "qwen2.5:3b",
+  apiUrl: "https://api.mistral.ai/v1", apiKey: "", modelAgent: "mistral-small-latest", modelRapide: "ministral-8b-latest"
+}, LS.get("deva-admin-reglages", {}));
+
+var publie = null;     // configuration publiée (sma/agents.json)
+var cfg = null;        // brouillon en cours
+var K = null;          // base de connaissances (pour la liste des FAQ)
+var tests = LS.get("deva-admin-tests", []);
+var usageSite = null, usageErreur = "";
+var selId = null, onglet = "config", nouveau = null; // nouveau : agent en cours de création
+
+function sauverBrouillon() {
+  if (JSON.stringify(cfg) === JSON.stringify(publie)) LS.del("deva-admin-brouillon");
+  else LS.set("deva-admin-brouillon", { base: publie, cfg: cfg });
+  majEtat();
+}
+function modifie() { return JSON.stringify(cfg) !== JSON.stringify(publie); }
+function majEtat() {
+  var e = $("#etatPub");
+  if (modifie()) { e.className = "etat-pub modif"; e.textContent = "Modifications non publiées"; }
+  else { e.className = "etat-pub ok"; e.textContent = "À jour avec le site"; }
+}
+
+/* ---------- agents ---------- */
+function agentsSpe() { return cfg.agents; }
+function trouver(id) {
+  if (id === ORCH) return cfg.orchestrateur;
+  if (id === GARD) return cfg.gardien;
+  return cfg.agents.find(function (a) { return a.id === id; });
+}
+function statut(id) {
+  if (id === GARD) return { cls: "b-fixe", txt: "Toujours actif" };
+  var a = trouver(id);
+  if (!a) return { cls: "b-off", txt: "?" };
+  if (a.actif === false) return { cls: "b-off", txt: "Inactif" };
+  if (a.pause) return { cls: "b-pause", txt: "En pause" };
+  return { cls: "b-on", txt: "Actif" };
+}
+function testsDe(id) { return tests.filter(function (t) { return t.agent === id || t.cible === id; }); }
+function tokensTestsJour(id) {
+  var d = aujourdhui();
+  return tests.filter(function (t) { return t.agent === id && t.date.slice(0, 10) === d; }).reduce(function (s, t) { return s + (t.tokens || 0); }, 0);
+}
+function tokensSite(id, jours) {
+  if (!usageSite) return null;
+  var depuis = new Date(Date.now() - (jours - 1) * 86400000).toISOString().slice(0, 10);
+  return usageSite.filter(function (u) { return (!id || u.agent === id) && u.jour >= depuis; })
+    .reduce(function (s, u) { s.tokens += u.tokens || 0; s.questions += u.questions || 0; return s; }, { tokens: 0, questions: 0 });
+}
+
+/* ---------- affichage : chiffres en haut ---------- */
+function renderStats() {
+  var A = agentsSpe();
+  var actifs = A.filter(function (a) { return a.actif !== false && !a.pause; }).length;
+  var pause = A.filter(function (a) { return a.actif !== false && a.pause; }).length;
+  var site7 = tokensSite(null, 7);
+  var orientes = tests.filter(function (t) { return t.attendu; });
+  var bienOrientes = orientes.filter(function (t) { return t.cible === t.attendu; }).length;
+  var notes = tests.filter(function (t) { return t.note; });
+  var bonnes = notes.filter(function (t) { return t.note === "ok"; }).length;
+  $("#stats").innerHTML =
+    '<div class="stat"><div class="v">' + actifs + ' <span style="font-size:14px;color:var(--muted)">/ ' + A.length + (pause ? " · " + pause + " en pause" : "") + '</span></div><div class="l">Agents spécialistes actifs</div></div>' +
+    '<div class="stat"><div class="v">' + (site7 ? fmt(site7.tokens) : "—") + '</div><div class="l">' + (site7 ? "Tokens sur le site, 7 derniers jours (" + fmt(site7.questions) + " questions)" : "Tokens sur le site : suivi non branché") + '</div></div>' +
+    '<div class="stat"><div class="v">' + (orientes.length ? Math.round(100 * bienOrientes / orientes.length) + " %" : "—") + '</div><div class="l">Questions bien orientées par l\'orchestrateur (' + orientes.length + ' tests)</div></div>' +
+    '<div class="stat"><div class="v">' + (notes.length ? Math.round(100 * bonnes / notes.length) + " %" : "—") + '</div><div class="l">Réponses jugées bonnes (' + notes.length + ' notées)</div></div>';
+}
+
+/* ---------- affichage : liste ---------- */
+function itemHtml(id, nom, sous, pct) {
+  var s = statut(id);
+  var bar = pct == null ? "" : '<div class="bar"><span class="' + (pct >= 100 ? "over" : pct >= 80 ? "warn" : "") + '" style="width:' + Math.min(100, pct) + '%"></span></div>';
+  return '<div class="agent-item ' + (id === selId ? "sel" : "") + '" data-id="' + esc(id) + '">' +
+    '<div class="row"><span class="name">' + esc(nom) + '</span><span class="badge ' + s.cls + '">' + s.txt + '</span></div>' +
+    '<div class="type">' + esc(sous) + '</div>' + bar + '</div>';
+}
+function renderList() {
+  var q = $("#search").value.trim().toLowerCase();
+  var vis = function (nom, role) { return !q || nom.toLowerCase().indexOf(q) >= 0 || String(role || "").toLowerCase().indexOf(q) >= 0; };
+  var h = '<div class="groupe">Pilotage</div>';
+  if (vis("Orchestrateur", cfg.orchestrateur.role)) h += itemHtml(ORCH, cfg.orchestrateur.label || "Orchestrateur", "Choisit l'agent qui répond", null);
+  if (vis("Gardien", cfg.gardien.role)) h += itemHtml(GARD, cfg.gardien.label || "Gardien", "Vérifie chaque réponse", null);
+  h += '<div class="groupe">Agents spécialistes</div>';
+  agentsSpe().forEach(function (a) {
+    if (!vis(a.label, a.role)) return;
+    var conso = tokenJour(a.id);
+    var pct = a.budgetJour ? Math.round(100 * conso / a.budgetJour) : null;
+    h += itemHtml(a.id, a.label, "Page " + (PAGES[a.mode] || a.mode) + " · " + fmt(conso) + " tokens aujourd'hui", pct);
+  });
+  $("#agentList").innerHTML = h;
+}
+function tokenJour(id) {
+  var site = usageSite ? usageSite.filter(function (u) { return u.agent === id && u.jour === aujourdhui(); }).reduce(function (s, u) { return s + (u.tokens || 0); }, 0) : 0;
+  return site + tokensTestsJour(id);
+}
+
+/* ---------- affichage : détail ---------- */
+function renderDetail() {
+  var id = nouveau ? null : selId;
+  var a = nouveau || trouver(id);
+  if (!a) { $("#detail").innerHTML = '<div class="empty">Choisissez un agent dans la liste.</div>'; return; }
+  var s = nouveau ? { cls: "b-off", txt: "Nouveau" } : statut(id);
+  var pausable = !nouveau && id !== GARD;
+  $("#detail").innerHTML =
+    '<div class="detail-head"><h2>' + esc(a.label || "Nouvel agent") + '</h2><span class="badge ' + s.cls + '">' + s.txt + '</span>' +
+    (pausable ? '<button class="btn small warn" id="qPause">' + (a.pause ? "Reprendre" : "Mettre en pause") + '</button>' : "") + '</div>' +
+    '<div class="tabs">' +
+      '<button class="tab ' + (onglet === "config" ? "active" : "") + '" data-tab="config">Configuration</button>' +
+      (nouveau ? "" : '<button class="tab ' + (onglet === "test" ? "active" : "") + '" data-tab="test">Tester</button>' +
+      '<button class="tab ' + (onglet === "conso" ? "active" : "") + '" data-tab="conso">Consommation</button>') +
+    '</div><div class="content" id="tab"></div>';
+  if (pausable) $("#qPause").onclick = function () { a.pause = !a.pause; sauverBrouillon(); renderAll(); toast(a.pause ? "Mis en pause (à publier)" : "Relancé (à publier)"); };
+  if (onglet === "config" || nouveau) {
+    if (id === ORCH) renderConfigOrch(); else if (id === GARD) renderConfigGard(); else renderConfigAgent(a);
+  } else if (onglet === "test") renderTest(id);
+  else renderConso(id);
+}
+
+/* --- configuration : orchestrateur --- */
+function renderConfigOrch() {
+  var o = cfg.orchestrateur;
+  $("#tab").innerHTML =
+    '<div class="info">L\'orchestrateur lit chaque question et choisit l\'agent qui répond. Il s\'appuie sur la description « Quand l\'utiliser » et les questions rattachées de chaque agent. En pause, c\'est directement l\'agent de la page qui répond (plus rapide, moins précis). En mode local (Ollama), il fonctionne par mots-clés.</div>' +
+    '<label>Consigne de l\'orchestrateur</label><textarea id="fRole">' + esc(o.role) + '</textarea>' +
+    '<div class="section-title">État</div><div class="switches">' +
+      '<label class="switch"><input type="checkbox" id="fPause" ' + (o.pause ? "checked" : "") + '> En pause</label></div>' +
+    '<div class="section-title">Réglages du modèle</div><div class="grid3">' +
+      '<div><label>Créativité (0 à 1)</label><input type="number" id="fTemp" min="0" max="1" step="0.1" value="' + o.temperature + '"></div>' +
+      '<div><label>Longueur max. (tokens)</label><input type="number" id="fMax" min="10" max="200" step="10" value="' + o.maxTokens + '"></div></div>' +
+    actionsHtml(false);
+  lierActions(function () {
+    o.role = $("#fRole").value.trim(); o.pause = $("#fPause").checked;
+    o.temperature = nombre($("#fTemp").value, 0, 0, 1); o.maxTokens = nombre($("#fMax").value, 40, 10, 200);
+    if (!o.role) return "La consigne est obligatoire.";
+  });
+}
+
+/* --- configuration : gardien --- */
+function renderConfigGard() {
+  var g = cfg.gardien;
+  $("#tab").innerHTML =
+    '<div class="info">Le gardien protège la doctrine d\'EVAD : il ne peut pas être désactivé. Ses règles de base sont dans le code (aucun chiffre d\'impact, mots exclus comme « récompense » ou « crédit », pas de tirets cadratins). Ici, vous pouvez ajouter des mots interdits.</div>' +
+    '<label>Description</label><textarea id="fRole">' + esc(g.role) + '</textarea>' +
+    '<div class="section-title">Mots interdits ajoutés</div><div class="hint">Un mot ou une expression par ligne. Une réponse qui en contient un est réécrite ou remplacée.</div>' +
+    '<div class="chips" id="lst" style="margin-top:8px"></div><button class="btn small" id="addL" style="margin-top:8px">+ Ajouter un mot</button>' +
+    '<div class="section-title">Réglages du modèle (réécriture)</div><div class="grid3">' +
+      '<div><label>Créativité (0 à 1)</label><input type="number" id="fTemp" min="0" max="1" step="0.1" value="' + g.temperature + '"></div>' +
+      '<div><label>Longueur max. (tokens)</label><input type="number" id="fMax" min="50" step="50" value="' + g.maxTokens + '"></div></div>' +
+    actionsHtml(false);
+  var tmp = (g.motsExclusAjoutes || []).slice();
+  editeurListe("#lst", "#addL", tmp, "Ex. : bonus");
+  lierActions(function () {
+    g.role = $("#fRole").value.trim();
+    g.motsExclusAjoutes = lireListe("#lst");
+    g.temperature = nombre($("#fTemp").value, 0, 0, 1); g.maxTokens = nombre($("#fMax").value, 450, 50, 2000);
+  });
+}
+
+/* --- configuration : agent spécialiste --- */
+function renderConfigAgent(a) {
+  var faqToutes = a.faq === "toutes";
+  var faqSel = Array.isArray(a.faq) ? a.faq : [];
+  var faqHtml = K && K.faq ? K.faq.map(function (f, i) {
+    return '<label class="switch"><input type="checkbox" class="fFaq" value="' + i + '" ' + (faqToutes || faqSel.indexOf(i) >= 0 ? "checked" : "") + '> ' + esc(f.q) + '</label>';
+  }).join("") : '<div class="hint">Base de connaissances non chargée.</div>';
+  $("#tab").innerHTML =
+    '<div class="section-title">Identité</div><div class="grid2">' +
+      '<div><label>Nom affiché</label><input type="text" id="fNom" value="' + esc(a.label) + '"></div>' +
+      '<div><label>Page de rattachement <span class="hint">(répond par défaut sur cette page)</span></label><select id="fMode">' +
+        Object.keys(PAGES).map(function (k) { return '<option value="' + k + '" ' + (a.mode === k ? "selected" : "") + '>' + PAGES[k] + '</option>'; }).join("") +
+      '</select></div></div>' +
+    (nouveau ? "" : '<div class="hint" style="margin-top:6px">Identifiant technique : <b>' + esc(a.id) + '</b> (ne change pas)</div>') +
+    '<label>Rôle et objectif <span class="hint">: ce que fait l\'agent et le résultat attendu pour l\'utilisateur. C\'est sa consigne principale.</span></label>' +
+    '<textarea id="fRole" style="min-height:100px">' + esc(a.role) + '</textarea>' +
+    '<label>Quand l\'utiliser <span class="hint">: les sujets qu\'il traite. L\'orchestrateur lit ce texte pour lui envoyer les questions.</span></label>' +
+    '<textarea id="fQuand">' + esc(a.quand) + '</textarea>' +
+
+    '<div class="section-title">Questions rattachées</div>' +
+    '<div class="hint">Questions typiques de cet agent. Elles aident l\'orchestrateur à choisir, et servent de tests : on vérifie qu\'elles arrivent bien à cet agent.</div>' +
+    '<div class="chips" id="lstQ" style="margin-top:8px"></div><button class="btn small" id="addQ" style="margin-top:8px">+ Ajouter une question</button>' +
+
+    '<div class="section-title">Mots-clés</div>' +
+    '<div class="hint">En mode local (Ollama), l\'orchestrateur choisit par mots-clés. Pour un nouvel agent, ajoutez ici les mots qui doivent l\'appeler (ex. : pluie, eau, citerne).</div>' +
+    '<div class="chips" id="lstM" style="margin-top:8px"></div><button class="btn small" id="addM" style="margin-top:8px">+ Ajouter un mot-clé</button>' +
+
+    '<div class="section-title">Connaissances données à l\'agent</div>' +
+    '<div class="checks">' + Object.keys(DONNEES).map(function (k) {
+      return '<label class="switch"><input type="checkbox" class="fDon" value="' + k + '" ' + ((a.donnees || []).indexOf(k) >= 0 ? "checked" : "") + '> ' + DONNEES[k] + '</label>';
+    }).join("") + '</div>' +
+    '<label>Questions de la FAQ <span class="hint">(toutes cochées = toute la FAQ)</span></label><div class="faq-box">' + faqHtml + '</div>' +
+
+    '<div class="section-title">État</div><div class="switches">' +
+      '<label class="switch"><input type="checkbox" id="fActif" ' + (a.actif !== false ? "checked" : "") + '> Agent actif</label>' +
+      '<label class="switch"><input type="checkbox" id="fPause" ' + (a.pause ? "checked" : "") + '> En pause</label></div>' +
+    '<div class="hint" style="margin-top:6px">Inactif : l\'agent est rangé, l\'orchestrateur l\'ignore. En pause : arrêt temporaire, il reprend en un clic. Dans les deux cas, l\'agent de secours (agent de la page ou Guide) répond à sa place.</div>' +
+
+    '<div class="section-title">Réglages du modèle</div><div class="grid3">' +
+      '<div><label>Créativité (0 à 1)</label><input type="number" id="fTemp" min="0" max="1" step="0.1" value="' + a.temperature + '"></div>' +
+      '<div><label>Longueur max. (tokens)</label><input type="number" id="fMax" min="50" max="2000" step="50" value="' + a.maxTokens + '"></div>' +
+      '<div><label>Budget par jour (tokens)</label><input type="number" id="fBudget" min="0" step="1000" value="' + a.budgetJour + '"></div></div>' +
+    '<div class="hint" style="margin-top:6px">Budget : au-delà, l\'agent se met de côté jusqu\'au lendemain (0 = pas de limite). En mode local, la longueur est plafonnée à 220 tokens pour rester rapide.</div>' +
+    actionsHtml(!nouveau);
+
+  editeurListe("#lstQ", "#addQ", (a.questions || []).slice(), "Ex. : Comment récupérer l'eau de pluie ?");
+  editeurListe("#lstM", "#addM", (a.motsCles || []).slice(), "Ex. : pluie");
+  lierActions(function () {
+    var nom = $("#fNom").value.trim();
+    if (!nom) return "Le nom est obligatoire.";
+    if (!$("#fRole").value.trim()) return "Le rôle est obligatoire.";
+    if (!$("#fQuand").value.trim()) return "« Quand l'utiliser » est obligatoire : sans lui, l'orchestrateur ne choisira jamais cet agent.";
+    var cible = a;
+    if (nouveau) {
+      var id = slug(nom), n = 2, b = id;
+      while (cfg.agents.some(function (x) { return x.id === id; }) || id === "orchestrateur" || id === "gardien") id = b + "-" + n++;
+      cible.id = id;
+    }
+    cible.label = nom;
+    cible.mode = $("#fMode").value;
+    cible.role = $("#fRole").value.trim();
+    cible.quand = $("#fQuand").value.trim();
+    cible.questions = lireListe("#lstQ");
+    cible.motsCles = lireListe("#lstM").map(function (m) { return m.toLowerCase(); });
+    cible.donnees = Array.prototype.map.call(document.querySelectorAll(".fDon:checked"), function (c) { return c.value; });
+    var faqs = Array.prototype.map.call(document.querySelectorAll(".fFaq:checked"), function (c) { return Number(c.value); });
+    cible.faq = K && faqs.length === K.faq.length ? "toutes" : faqs;
+    cible.actif = $("#fActif").checked;
+    cible.pause = $("#fPause").checked;
+    cible.temperature = nombre($("#fTemp").value, 0.4, 0, 1);
+    cible.maxTokens = nombre($("#fMax").value, 450, 50, 2000);
+    cible.budgetJour = nombre($("#fBudget").value, 0, 0, 1e9);
+    if (nouveau) { cfg.agents.push(cible); selId = cible.id; nouveau = null; }
+  }, function () {
+    if (!confirm("Supprimer définitivement l'agent « " + a.label + " » ?\n\nPour l'arrêter sans le perdre, décochez plutôt « Agent actif ».")) return;
+    cfg.agents = cfg.agents.filter(function (x) { return x.id !== a.id; });
+    selId = ORCH; sauverBrouillon(); renderAll(); toast("Agent supprimé (à publier)");
+  });
+}
+
+function actionsHtml(supprimable) {
+  return '<div class="actions">' + (supprimable ? '<button class="btn danger" id="delBtn">Supprimer</button>' : "") +
+    '<div style="flex:1"></div><button class="btn" id="cancelBtn">Annuler</button>' +
+    '<button class="btn primary" id="saveBtn">' + (nouveau ? "Créer l'agent" : "Enregistrer") + '</button></div>';
+}
+function lierActions(enregistrer, supprimer) {
+  $("#saveBtn").onclick = function () {
+    var erreur = enregistrer();
+    if (erreur) { toast(erreur); return; }
+    sauverBrouillon(); renderAll(); toast("Enregistré dans le brouillon. Publiez pour mettre en ligne.");
+  };
+  $("#cancelBtn").onclick = function () {
+    if (nouveau) { nouveau = null; selId = selId || ORCH; }
+    renderAll();
+  };
+  if (supprimer && $("#delBtn")) $("#delBtn").onclick = supprimer;
+}
+function nombre(v, d, min, max) { var n = parseFloat(v); return isFinite(n) ? Math.min(max, Math.max(min, n)) : d; }
+function editeurListe(boxSel, addSel, items, ph) {
+  function draw(focus) {
+    var box = $(boxSel);
+    box.innerHTML = items.length ? items.map(function (q, i) {
+      return '<div class="chip"><input type="text" data-i="' + i + '" value="' + esc(q) + '" placeholder="' + esc(ph) + '"><button class="btn small danger" data-del="' + i + '">Retirer</button></div>';
+    }).join("") : '<div class="hint">Aucun pour l\'instant.</div>';
+    box.querySelectorAll("input").forEach(function (inp) { inp.oninput = function () { items[+inp.dataset.i] = inp.value; }; });
+    box.querySelectorAll("[data-del]").forEach(function (b) { b.onclick = function () { items.splice(+b.dataset.del, 1); draw(); }; });
+    if (focus) { var all = box.querySelectorAll("input"); all[all.length - 1].focus(); }
+  }
+  $(addSel).onclick = function () { items.push(""); draw(true); };
+  draw();
+}
+function lireListe(boxSel) {
+  return Array.prototype.map.call(document.querySelectorAll(boxSel + " input"), function (i) { return i.value.trim(); }).filter(Boolean);
+}
+
+/* ---------- Tester : le vrai SMA (sma/worker.js) exécuté ici avec le brouillon ---------- */
+var W = null;
+function chargerWorker() {
+  if (!W) W = import(new URL("sma/worker.js", location.href).href + "?v=" + Date.now());
+  return W;
+}
+function envTest(opts) {
+  var e = {
+    KNOWLEDGE_URL: new URL("assets/deva-knowledge.json", location.href).href,
+    AGENTS_CONFIG: clone(cfg)
+  };
+  if (reglages.provider === "ollama") {
+    Object.assign(e, { LLM_API_KEY: "ollama", LLM_PROVIDER: "ollama", LLM_BASE_URL: reglages.ollamaUrl, MODEL_AGENT: reglages.ollamaModel, MODEL_RAPIDE: reglages.ollamaModel });
+  } else {
+    Object.assign(e, { LLM_API_KEY: reglages.apiKey, LLM_BASE_URL: reglages.apiUrl, MODEL_AGENT: reglages.modelAgent, MODEL_RAPIDE: reglages.modelRapide });
+  }
+  if (opts.leger) e.MODE_LEGER = "1";
+  if (opts.force) e.FORCE_AGENT = opts.force;
+  return e;
+}
+function nomAgent(id) { var a = cfg.agents.find(function (x) { return x.id === id; }); return a ? a.label : id; }
+
+function renderTest(id) {
+  var spe = id !== ORCH && id !== GARD;
+  var a = spe ? trouver(id) : null;
+  var questions = spe ? (a.questions || []) : [];
+  var leger = LS.get("deva-admin-leger", reglages.provider === "ollama");
+  $("#tab").innerHTML =
+    '<div class="info">Le test exécute le vrai SMA du site, avec la configuration du brouillon (même non publiée). Modèle : <b>' +
+      esc(reglages.provider === "ollama" ? "Ollama · " + reglages.ollamaModel : reglages.modelAgent) + '</b> (modifiable dans Réglages).' +
+      (reglages.provider === "ollama" ? "<br>Ollama doit être lancé et autoriser cette page (voir sma/README.md). Sur un ordinateur sans carte graphique, compter jusqu'à 1 ou 2 minutes par réponse." : "") + '</div>' +
+    (spe && (a.actif === false || a.pause) ? '<div class="warnbox">Cet agent est inactif ou en pause : sur le site, il ne répond pas. Le test direct reste possible ici.</div>' : "") +
+    '<label>Question de test</label><textarea id="tQ" placeholder="Écrivez une question comme le ferait un utilisateur…"></textarea>' +
+    (questions.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + questions.map(function (q) { return '<button class="btn small exQ">' + esc(q) + '</button>'; }).join("") + '</div>' : "") +
+    '<div class="grid2">' +
+      '<div><label>Façon de tester</label><select id="tMode">' +
+        (spe ? '<option value="direct">Cet agent seul (sans orchestrateur)</option>' : "") +
+        '<option value="complet">Parcours complet : orchestrateur, agent, gardien</option></select></div>' +
+      '<div><label>Page simulée</label><select id="tPage">' + Object.keys(PAGES).map(function (k) {
+        return '<option value="' + k + '" ' + ((spe ? a.mode : "accueil") === k ? "selected" : "") + '>' + PAGES[k] + '</option>'; }).join("") + '</select></div></div>' +
+    '<div class="switches" style="margin-top:12px"><label class="switch"><input type="checkbox" id="tLeger" ' + (leger ? "checked" : "") + '> Mode léger (comme le mode local du site : orchestrateur par mots-clés, un seul appel)</label></div>' +
+    '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">' +
+      '<button class="btn primary" id="tRun">Lancer le test</button>' +
+      (questions.length ? '<button class="btn" id="tAll">Vérifier l\'orientation des ' + questions.length + ' questions rattachées</button>' : "") + '</div>' +
+    '<div id="tRes"></div>' +
+    '<div class="section-title" style="margin-top:28px">Historique des tests</div><div id="tHist"></div>';
+
+  document.querySelectorAll(".exQ").forEach(function (b) { b.onclick = function () { $("#tQ").value = b.textContent; }; });
+  $("#tLeger").onchange = function () { LS.set("deva-admin-leger", this.checked); };
+  $("#tRun").onclick = function () {
+    var q = $("#tQ").value.trim(); if (!q) { toast("Écrivez une question"); return; }
+    lancer(id, q, { direct: $("#tMode").value === "direct", page: $("#tPage").value, leger: $("#tLeger").checked, attendu: null });
+  };
+  if ($("#tAll")) $("#tAll").onclick = async function () {
+    var bilan = [];
+    for (var i = 0; i < questions.length; i++) {
+      $("#tQ").value = questions[i];
+      var t = await lancer(id, questions[i], { direct: false, page: "accueil", leger: $("#tLeger").checked, attendu: id });
+      if (!t) return;
+      bilan.push(t);
+    }
+    var bons = bilan.filter(function (t) { return t.cible === id; }).length;
+    $("#tRes").insertAdjacentHTML("afterbegin", '<div class="' + (bons === bilan.length ? "info" : "warnbox") + '" style="margin-top:14px"><b>' + bons + " sur " + bilan.length +
+      '</b> questions rattachées arrivent bien à cet agent (testées depuis l\'accueil).' + (bons < bilan.length ? " Précisez « Quand l'utiliser » ou ajoutez des mots-clés." : "") + '</div>');
+  };
+  renderHist(id);
+}
+
+async function lancer(id, question, o) {
+  var btn = $("#tRun"); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> En cours…';
+  $("#tRes").innerHTML = '<div class="info" style="margin-top:14px"><span class="spin"></span> Le modèle réfléchit…</div>';
+  var t0 = performance.now();
+  try {
+    var Wm = await chargerWorker();
+    var env = envTest({ leger: o.leger, force: o.direct ? id : null });
+    var live = null;
+    env.onToken = function (partiel) {
+      if (!live) { $("#tRes").innerHTML = '<div class="result"><div class="answer" id="tLive"></div></div>'; live = $("#tLive"); }
+      live.textContent = partiel;
+    };
+    var r = await Wm.repondre(env, { question: question, mode: o.page, page: "admin" });
+    if (r.status !== 200) throw new Error((r.data && r.data.erreur) || ("statut " + r.status));
+    var d = r.data;
+    var t = {
+      id: Date.now().toString(36), date: new Date().toISOString(), agent: id, cible: d.agent, attendu: o.attendu,
+      question: question, reponse: d.reponse, tokens: (d.usage && d.usage.tokens) || 0, appels: (d.usage && d.usage.appels) || 0,
+      ms: Math.round(performance.now() - t0), routage: d.routage, gardien: d.gardien, leger: o.leger, note: null
+    };
+    tests.unshift(t); tests = tests.slice(0, 400); LS.set("deva-admin-tests", tests);
+    afficherResultat(t);
+    renderStats(); renderList(); renderHist(id);
+    return t;
+  } catch (e) {
+    var m = String(e && e.message || e);
+    $("#tRes").innerHTML = '<div class="err">Le test a échoué : ' + esc(m) + (reglages.provider === "ollama"
+      ? "\n\nVérifiez qu'Ollama est lancé, que le modèle « " + esc(reglages.ollamaModel) + " » est installé (ollama pull " + esc(reglages.ollamaModel) + "), et que cette page est autorisée (OLLAMA_ORIGINS, voir sma/README.md). Le plus fiable : ouvrir cette page en http://localhost:8790/admin.html."
+      : "\n\nVérifiez l'adresse de l'API, la clé et les noms de modèles dans Réglages.") + '</div>';
+    return null;
+  } finally {
+    btn.disabled = false; btn.textContent = "Lancer le test";
+  }
+}
+function afficherResultat(t) {
+  var orient = t.attendu ? (t.cible === t.attendu ? '<span class="ok">bien orientée</span>' : '<span class="ko">partie vers ' + esc(nomAgent(t.cible)) + '</span>') : "";
+  $("#tRes").innerHTML = '<div class="result"><div class="meta">' +
+    '<span>Agent qui répond : <b>' + esc(nomAgent(t.cible)) + '</b> ' + orient + '</span>' +
+    '<span>Choix : <b>' + esc(t.routage) + '</b></span>' +
+    '<span>Gardien : <b>' + esc(t.gardien) + '</b></span>' +
+    '<span>Temps : <b>' + (t.ms / 1000).toFixed(1) + ' s</b></span>' +
+    '<span>Tokens : <b>' + fmt(t.tokens) + '</b> (' + t.appels + ' appel' + (t.appels > 1 ? "s" : "") + ')</span></div>' +
+    '<div class="answer">' + esc(t.reponse) + '</div>' +
+    '<div class="eval"><span class="hint">La réponse est-elle bonne ?</span>' +
+    '<button class="btn small" data-note="ok">Oui</button><button class="btn small" data-note="ko">Non</button><span id="noteMsg" class="hint"></span></div></div>';
+  document.querySelectorAll("[data-note]").forEach(function (b) {
+    b.onclick = function () { t.note = b.dataset.note; LS.set("deva-admin-tests", tests); $("#noteMsg").textContent = "Note enregistrée"; renderStats(); renderHist(t.agent); };
+  });
+}
+function renderHist(id) {
+  var h = testsDe(id).slice(0, 25);
+  if (!h.length) { $("#tHist").innerHTML = '<div class="hint">Aucun test pour l\'instant.</div>'; return; }
+  $("#tHist").innerHTML = '<table><tr><th>Date</th><th>Question</th><th>Répondu par</th><th>Temps</th><th>Tokens</th><th>Bonne ?</th></tr>' +
+    h.map(function (t) {
+      return '<tr><td>' + new Date(t.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) + '</td><td>' + esc(t.question) + '</td>' +
+        '<td>' + esc(nomAgent(t.cible)) + (t.attendu ? (t.cible === t.attendu ? ' <span class="ok">✓</span>' : ' <span class="ko">✗</span>') : "") + '</td>' +
+        '<td>' + (t.ms / 1000).toFixed(1) + ' s</td><td>' + fmt(t.tokens) + '</td>' +
+        '<td>' + (t.note === "ok" ? '<span class="ok">Oui</span>' : t.note === "ko" ? '<span class="ko">Non</span>' : "—") + '</td></tr>';
+    }).join("") + '</table>' +
+    '<div style="margin-top:10px"><button class="btn small danger" id="hClear">Effacer l\'historique de cet agent</button></div>';
+  $("#hClear").onclick = function () {
+    if (!confirm("Effacer les tests de cet agent ?")) return;
+    tests = tests.filter(function (t) { return t.agent !== id; }); LS.set("deva-admin-tests", tests); renderAll();
+  };
+}
+
+/* ---------- Consommation ---------- */
+function renderConso(id) {
+  var spe = id !== ORCH && id !== GARD;
+  var a = trouver(id);
+  var tt = testsDe(id).filter(function (t) { return t.agent === id; });
+  var tokTests = tt.reduce(function (s, t) { return s + (t.tokens || 0); }, 0);
+  var tps = tt.length ? (tt.reduce(function (s, t) { return s + t.ms; }, 0) / tt.length / 1000).toFixed(1) + " s" : "—";
+  var notes = tt.filter(function (t) { return t.note; });
+  var taux = notes.length ? Math.round(100 * notes.filter(function (t) { return t.note === "ok"; }).length / notes.length) + " %" : "—";
+  var s7 = tokensSite(spe ? id : null, 7), s30 = tokensSite(spe ? id : null, 30);
+  var jour = spe ? tokenJour(id) : 0;
+  var pct = spe && a.budgetJour ? Math.round(100 * jour / a.budgetJour) : null;
+
+  var siteHtml;
+  if (usageSite) {
+    siteHtml = '<div class="stats" style="padding:0;grid-template-columns:repeat(3,1fr)">' +
+      '<div class="stat"><div class="v">' + fmt(s7.tokens) + '</div><div class="l">Tokens, 7 derniers jours</div></div>' +
+      '<div class="stat"><div class="v">' + fmt(s7.questions) + '</div><div class="l">Questions, 7 derniers jours</div></div>' +
+      '<div class="stat"><div class="v">' + fmt(s30.tokens) + '</div><div class="l">Tokens, 30 derniers jours</div></div></div>' +
+      (spe ? "" : '<div class="hint" style="margin-top:8px">Pour l\'orchestrateur et le gardien, les tokens sont comptés dans la réponse de l\'agent choisi : ce sont les totaux du SMA entier.</div>');
+  } else {
+    siteHtml = '<div class="warnbox">Suivi du site non disponible' + (usageErreur ? " (" + esc(usageErreur) + ")" : "") +
+      '. Pour l\'activer, exécuter une fois <b>supabase/deva-usage.sql</b> dans Supabase &gt; SQL Editor.</div>';
+  }
+  $("#tab").innerHTML =
+    '<div class="section-title">Utilisation réelle sur le site</div>' + siteHtml +
+    (spe ? '<div class="section-title">Budget du jour</div>' +
+      '<div class="hint">' + fmt(jour) + ' tokens aujourd\'hui (site et tests)' + (a.budgetJour ? " sur un budget de " + fmt(a.budgetJour) : ", pas de budget fixé") + '</div>' +
+      (pct != null ? '<div class="bar" style="height:8px;margin-top:8px"><span class="' + (pct >= 100 ? "over" : pct >= 80 ? "warn" : "") + '" style="width:' + Math.min(100, pct) + '%"></span></div>' : "") +
+      (pct != null && pct >= 100 ? '<div class="err">Budget atteint : l\'agent est mis de côté jusqu\'à demain. Augmentez le budget ou mettez-le en pause.</div>' : "") : "") +
+    '<div class="section-title">Tests faits ici</div>' +
+    '<div class="stats" style="padding:0;grid-template-columns:repeat(4,1fr)">' +
+      '<div class="stat"><div class="v">' + tt.length + '</div><div class="l">Tests</div></div>' +
+      '<div class="stat"><div class="v">' + fmt(tokTests) + '</div><div class="l">Tokens consommés</div></div>' +
+      '<div class="stat"><div class="v">' + tps + '</div><div class="l">Temps moyen</div></div>' +
+      '<div class="stat"><div class="v">' + taux + '</div><div class="l">Réponses jugées bonnes</div></div></div>' +
+    (usageSite ? '<div style="margin-top:14px"><button class="btn small" id="cRefresh">Actualiser</button></div>' : "");
+  if ($("#cRefresh")) $("#cRefresh").onclick = function () { chargerUsage().then(renderAll); };
+}
+
+/* ---------- Publication sur GitHub ---------- */
+function verifier() {
+  var err = [];
+  var ids = {};
+  cfg.agents.forEach(function (a) {
+    if (ids[a.id]) err.push("Deux agents ont le même identifiant : " + a.id);
+    ids[a.id] = 1;
+    if (!a.label || !a.role || !a.quand) err.push("L'agent « " + (a.label || a.id) + " » n'a pas de nom, de rôle ou de « Quand l'utiliser ».");
+  });
+  if (!cfg.agents.some(function (a) { return a.actif !== false && !a.pause; })) err.push("Aucun agent actif : Deva ne répondrait plus que par règles.");
+  return err;
+}
+function resumeChangements() {
+  var l = [], avant = {};
+  (publie.agents || []).forEach(function (a) { avant[a.id] = a; });
+  cfg.agents.forEach(function (a) {
+    var b = avant[a.id];
+    if (!b) { l.push("Nouvel agent : " + a.label); return; }
+    if ((b.actif !== false) !== (a.actif !== false)) l.push(a.label + (a.actif !== false ? " : réactivé" : " : désactivé"));
+    if (!!b.pause !== !!a.pause) l.push(a.label + (a.pause ? " : mis en pause" : " : relancé"));
+    var autres = ["label", "role", "quand", "questions", "motsCles", "mode", "faq", "donnees", "temperature", "maxTokens", "budgetJour"]
+      .filter(function (k) { return JSON.stringify(a[k]) !== JSON.stringify(b[k]); });
+    if (autres.length) l.push(a.label + " : modifié");
+    delete avant[a.id];
+  });
+  Object.keys(avant).forEach(function (id) { l.push("Supprimé : " + avant[id].label); });
+  if (JSON.stringify(cfg.orchestrateur) !== JSON.stringify(publie.orchestrateur)) l.push("Orchestrateur : modifié" + (cfg.orchestrateur.pause !== publie.orchestrateur.pause ? (cfg.orchestrateur.pause ? " (mis en pause)" : " (relancé)") : ""));
+  if (JSON.stringify(cfg.gardien) !== JSON.stringify(publie.gardien)) l.push("Gardien : modifié");
+  return l;
+}
+function b64(texte) {
+  var bytes = new TextEncoder().encode(texte), bin = "";
+  for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function publier() {
+  var api = "https://api.github.com/repos/" + encodeURIComponent(reglages.owner) + "/" + encodeURIComponent(reglages.repo) + "/contents/sma/agents.json";
+  var h = { Authorization: "Bearer " + reglages.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+  var r = await fetch(api + "?ref=" + encodeURIComponent(reglages.branch), { headers: h, cache: "no-store" });
+  if (r.status === 401) throw new Error("jeton GitHub refusé (expiré ou mal copié)");
+  if (r.status === 404) throw new Error("dépôt, branche ou fichier introuvable, ou jeton sans accès à ce dépôt");
+  if (!r.ok) throw new Error("GitHub : HTTP " + r.status);
+  var actuel = await r.json();
+  // Quelqu'un a publié entre-temps : on ne l'écrase pas sans le dire.
+  var enLigne = null;
+  try { enLigne = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(actuel.content.replace(/\n/g, "")), function (c) { return c.charCodeAt(0); }))); } catch (e) { /* ignore */ }
+  if (enLigne && JSON.stringify(enLigne) !== JSON.stringify(publie) &&
+      !confirm("La configuration a été modifiée sur GitHub depuis l'ouverture de cette page (par une autre personne ?).\n\nPublier quand même et remplacer sa version ?")) return false;
+  var sortie = clone(cfg);
+  sortie.majLe = new Date().toISOString();
+  var message = ($("#pMessage").value.trim() || "Admin Deva : " + resumeChangements().slice(0, 4).join(", ")).slice(0, 200);
+  var put = await fetch(api, {
+    method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, h),
+    body: JSON.stringify({ message: message, content: b64(JSON.stringify(sortie, null, 2) + "\n"), sha: actuel.sha, branch: reglages.branch })
+  });
+  if (put.status === 409) throw new Error("conflit : rechargez la page puis recommencez");
+  if (put.status === 403) throw new Error("le jeton n'a pas le droit d'écrire (Contents : Read and write)");
+  if (!put.ok) throw new Error("GitHub : HTTP " + put.status + " " + (await put.text()).slice(0, 160));
+  publie = sortie; cfg = clone(sortie);
+  LS.del("deva-admin-brouillon");
+  LS.set("deva-admin-publie", { date: Date.now(), cfg: sortie }); // le site met quelques minutes à suivre
+  return true;
+}
+
+/* ---------- boutons généraux ---------- */
+function ouvrir(id) { $("#" + id).classList.add("open"); }
+function fermer(id) { $("#" + id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach(function (b) { b.onclick = function () { fermer(b.dataset.close); }; });
+
+$("#btnPublier").onclick = function () {
+  if (!modifie()) { toast("Rien à publier : le site est déjà à jour."); return; }
+  var err = verifier();
+  var res = resumeChangements();
+  $("#pResume").innerHTML = (res.length ? "<ul style=\"margin:0;padding-left:18px\">" + res.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : '<div class="hint">Petits réglages.</div>') +
+    '<div class="hint" style="margin-top:10px">En ligne sur le site et le Worker en 10 minutes environ.</div>';
+  $("#pErr").innerHTML = err.length ? '<div class="err">' + esc(err.join("\n")) + '</div>' : (!reglages.token ? '<div class="warnbox">Ajoutez d\'abord un jeton GitHub dans Réglages, ou utilisez « Télécharger agents.json » et déposez le fichier dans sma/ sur GitHub.</div>' : "");
+  $("#pGo").disabled = !!err.length || !reglages.token;
+  $("#pMessage").value = "";
+  ouvrir("mPublier");
+};
+$("#pGo").onclick = async function () {
+  var b = $("#pGo"); b.disabled = true; b.innerHTML = '<span class="spin"></span> Publication…';
+  try {
+    if (await publier()) { fermer("mPublier"); renderAll(); toast("Publié. En ligne d'ici 10 minutes environ."); }
+  } catch (e) { $("#pErr").innerHTML = '<div class="err">Publication impossible : ' + esc(e.message) + '</div>'; }
+  finally { b.disabled = false; b.textContent = "Publier"; }
+};
+$("#btnAnnulerTout").onclick = function () {
+  if (!modifie()) { toast("Aucune modification en cours."); return; }
+  if (!confirm("Annuler toutes les modifications non publiées et revenir à la version du site ?")) return;
+  cfg = clone(publie); nouveau = null; LS.del("deva-admin-brouillon");
+  if (selId !== ORCH && selId !== GARD && !trouver(selId)) selId = ORCH;
+  renderAll(); toast("Modifications annulées");
+};
+$("#btnTelecharger").onclick = function () {
+  var blob = new Blob([JSON.stringify(cfg, null, 2) + "\n"], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var lien = document.createElement("a"); lien.href = url; lien.download = "agents.json"; document.body.appendChild(lien); lien.click(); lien.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+};
+$("#btnNew").onclick = function () {
+  nouveau = { id: "", label: "", role: "", quand: "", questions: [""], motsCles: [], mode: "accueil", faq: [], donnees: ["solutionsCourtes"],
+    actif: true, pause: false, temperature: 0.4, maxTokens: 450, budgetJour: 200000 };
+  onglet = "config"; renderAll(); $("#fNom").focus();
+};
+$("#search").oninput = renderList;
+$("#agentList").onclick = function (e) {
+  var it = e.target.closest(".agent-item"); if (!it) return;
+  nouveau = null; selId = it.dataset.id; renderAll();
+};
+$("#detail").addEventListener("click", function (e) {
+  var b = e.target.closest(".tab"); if (!b) return;
+  onglet = b.dataset.tab; renderDetail();
+});
+
+$("#btnReglages").onclick = function () {
+  $("#rToken").value = reglages.token; $("#rOwner").value = reglages.owner; $("#rRepo").value = reglages.repo; $("#rBranch").value = reglages.branch;
+  $("#rProvider").value = reglages.provider; $("#rOllamaUrl").value = reglages.ollamaUrl; $("#rOllamaModel").value = reglages.ollamaModel;
+  $("#rApiUrl").value = reglages.apiUrl; $("#rApiKey").value = reglages.apiKey; $("#rModelAgent").value = reglages.modelAgent; $("#rModelRapide").value = reglages.modelRapide;
+  majFournisseur(); ouvrir("mReglages");
+};
+function majFournisseur() {
+  var o = $("#rProvider").value === "ollama";
+  $("#rOllama").style.display = o ? "" : "none"; $("#rOpenai").style.display = o ? "none" : "";
+}
+$("#rProvider").onchange = majFournisseur;
+$("#rSave").onclick = function () {
+  reglages = {
+    token: $("#rToken").value.trim(), owner: $("#rOwner").value.trim() || "evadconnect", repo: $("#rRepo").value.trim() || "demo-cliquable-v2",
+    branch: $("#rBranch").value.trim() || "main", provider: $("#rProvider").value,
+    ollamaUrl: $("#rOllamaUrl").value.trim() || "http://localhost:11434", ollamaModel: $("#rOllamaModel").value.trim() || "qwen2.5:3b",
+    apiUrl: $("#rApiUrl").value.trim(), apiKey: $("#rApiKey").value.trim(), modelAgent: $("#rModelAgent").value.trim(), modelRapide: $("#rModelRapide").value.trim()
+  };
+  LS.set("deva-admin-reglages", reglages); fermer("mReglages"); renderAll(); toast("Réglages enregistrés");
+};
+window.addEventListener("beforeunload", function (e) { if (nouveau && nouveau.label) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------- démarrage ---------- */
+function renderAll() { renderStats(); renderList(); renderDetail(); majEtat(); }
+async function chargerUsage() {
+  usageSite = null; usageErreur = "";
+  if (!window.EvadDB || !window.EvadDB.loadUsage) { usageErreur = "Supabase non chargé"; return; }
+  try { usageSite = await window.EvadDB.loadUsage(30); }
+  catch (e) { usageErreur = /deva_usage_jour|does not exist|schema cache/i.test(e.message) ? "table pas encore créée" : e.message; }
+}
+async function init() {
+  try {
+    var r = await fetch("sma/agents.json?v=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    publie = await r.json();
+  } catch (e) {
+    $("#detail").innerHTML = '<div class="err" style="margin:20px">Impossible de lire sma/agents.json (' + esc(e.message) + ').\nOuvrez cette page depuis le site (GitHub Pages) ou un serveur local : python3 -m http.server 8790, puis http://localhost:8790/admin.html</div>';
+    return;
+  }
+  // Publication toute récente pas encore visible sur le site : on part de ce qui vient d'être publié.
+  var recent = LS.get("deva-admin-publie", null);
+  if (recent && recent.cfg && Date.now() - recent.date < 15 * 60 * 1000 && recent.cfg.majLe && (!publie.majLe || publie.majLe < recent.cfg.majLe)) {
+    publie = recent.cfg;
+    setTimeout(function () { toast("Votre dernière publication est en cours de mise en ligne (quelques minutes)."); }, 400);
+  }
+  var b = LS.get("deva-admin-brouillon", null);
+  if (b && b.cfg && JSON.stringify(b.base) === JSON.stringify(publie)) { cfg = b.cfg; toast("Brouillon non publié retrouvé"); }
+  else {
+    if (b && b.cfg) toast("La version en ligne a changé : ancien brouillon écarté.");
+    cfg = clone(publie); LS.del("deva-admin-brouillon");
+  }
+  try { var rk = await fetch("assets/deva-knowledge.json", { cache: "no-store" }); if (rk.ok) K = await rk.json(); } catch (e) { /* liste FAQ absente */ }
+  selId = ORCH;
+  renderAll();
+  await chargerUsage();
+  renderAll();
+}
+init();
+})();
+</script>
+</body>
+</html>

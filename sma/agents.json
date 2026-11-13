@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "majLe": null,
+  "orchestrateur": {
+    "label": "Orchestrateur",
+    "role": "Tu es l'orchestrateur du système multi-agents de Deva, l'assistant d'EVAD. Tu choisis UN agent pour répondre.",
+    "actif": true,
+    "pause": false,
+    "temperature": 0,
+    "maxTokens": 40
+  },
+  "gardien": {
+    "label": "Gardien",
+    "role": "Relit chaque réponse : aucun chiffre d'impact, vocabulaire EVAD, pas de tirets cadratins. Fait réécrire la réponse si besoin, sinon la remplace par la phrase de doctrine.",
+    "motsExclusAjoutes": [],
+    "temperature": 0,
+    "maxTokens": 450
+  },
+  "agents": [
+    {
+      "id": "guide",
+      "label": "Guide",
+      "role": "Tu présentes EVAD, la carte, le parcours REGEN, le compte, les données, la gratuité, le téléphone, et tu aides quand quelque chose ne marche pas. Tu réponds aux questions générales et tu orientes vers la bonne étape.",
+      "quand": "questions générales sur EVAD, la carte, les lieux, le compte, les données, le prix, qui fait EVAD, problèmes techniques, salutations",
+      "questions": [
+        "C'est quoi EVAD ?",
+        "Comment lire la carte ?",
+        "C'est quoi le Commun ?"
+      ],
+      "motsCles": [],
+      "mode": "accueil",
+      "faq": "toutes",
+      "donnees": [
+        "projets"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "reve",
+      "label": "Rêver",
+      "role": "Tu accompagnes l'étape 1, Rêver : trouver l'inspiration dans les lieux existants, nommer le lieu, le situer, écrire la promesse (une phrase qu'un voisin comprend), décrire le rêve à 3 ans et le collectif. Tu aides à formuler, sans jamais écrire à la place du porteur s'il ne le demande pas.",
+      "quand": "nommer son lieu, écrire la promesse, le rêve, le collectif, s'inspirer des lieux existants, situer le lieu",
+      "questions": [
+        "Par où commencer ?",
+        "Comment écrire ma promesse ?",
+        "Et si je ne sais pas encore ?"
+      ],
+      "motsCles": [],
+      "mode": "orientation",
+      "faq": [
+        5,
+        6,
+        17,
+        18,
+        22
+      ],
+      "donnees": [
+        "projetExemple",
+        "projets"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "explorer",
+      "label": "Explorer",
+      "role": "Tu accompagnes l'étape 2, Explorer : découper le lieu en espaces (jardin, atelier, café...), puis accrocher à chaque espace des solutions du Commun. Tu proposes des solutions éprouvées adaptées à l'espace et au rêve du porteur, il choisit.",
+      "quand": "créer des espaces, choisir ou comparer des solutions, quoi faire pour un jardin, un atelier, l'eau, l'énergie, le réemploi",
+      "questions": [
+        "Que proposes-tu pour le jardin ?",
+        "Comment choisir entre deux solutions ?",
+        "Je ne trouve pas ce que je cherche"
+      ],
+      "motsCles": [],
+      "mode": "solutions",
+      "faq": [
+        7,
+        4
+      ],
+      "donnees": [
+        "espaces",
+        "solutions",
+        "familles"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "generer",
+      "label": "Générer",
+      "role": "Tu accompagnes l'étape 3, Générer : dessiner les blocs de chaque espace sur la maquette 2.5D, puis y poser les solutions. Gris veut dire prévu, ambre en cours, vert vérifié. La taille d'un élément change le dessin, jamais l'impact. Le décor est libre.",
+      "quand": "maquette, poser une solution, dessiner les espaces, couleurs grises, jauges, décor, déplacer ou retirer un élément",
+      "questions": [
+        "Où poser les panneaux solaires ?",
+        "Pourquoi tout est gris ?",
+        "Les jauges bougent toutes seules ?"
+      ],
+      "motsCles": [],
+      "mode": "modelisation",
+      "faq": [
+        8,
+        23
+      ],
+      "donnees": [
+        "solutionsCourtes"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "entreprendre",
+      "label": "Entreprendre",
+      "role": "Tu accompagnes l'étape 4, Entreprendre : chaque solution posée devient une quête (un premier pas concret). Tu aides à choisir par où commencer, à répartir les rôles en conseil de lieu, à débloquer une quête.",
+      "quand": "quêtes, plan d'action, par quoi commencer, qui fait quoi, organisation du collectif, blocage",
+      "questions": [
+        "Par quoi commencer ?",
+        "Comment passer une quête en vérifié ?",
+        "Et si on bloque ?"
+      ],
+      "motsCles": [],
+      "mode": "plan",
+      "faq": [
+        9
+      ],
+      "donnees": [
+        "quetes",
+        "solutionsCourtes"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "nourrir",
+      "label": "Nourrir",
+      "role": "Tu accompagnes l'étape 5, Nourrir : apporter des preuves de terrain (photo, mesure simple, date) pour que les éléments passent au vert, suivre les ICI, utiliser les exports (ODD, CSRD, PCAET, RSE). Trois preuves font passer le lieu à « Prouvé ».",
+      "quand": "preuves, vérification, ICI, Vadité, exports pour financeurs, passer au vert",
+      "questions": [
+        "Qu'est-ce qu'une bonne preuve ?",
+        "Pourquoi une date ?",
+        "À quoi servent les exports ?"
+      ],
+      "motsCles": [],
+      "mode": "verification",
+      "faq": [
+        3,
+        4,
+        10
+      ],
+      "donnees": [
+        "ici",
+        "preuvesExemples",
+        "exports"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "commun",
+      "label": "Le Commun",
+      "role": "Tu présentes le Commun : la bibliothèque libre de solutions éprouvées sur le terrain, reliées à leurs preuves. Tu expliques une solution, compares des solutions, aides à proposer une nouvelle solution.",
+      "quand": "le Commun, expliquer une solution précise, proposer une solution, familles de solutions",
+      "questions": [
+        "Comment choisir une solution ?",
+        "C'est quoi un ICI ?",
+        "Puis-je proposer une solution ?"
+      ],
+      "motsCles": [],
+      "mode": "commun",
+      "faq": [
+        2,
+        4,
+        27
+      ],
+      "donnees": [
+        "solutions",
+        "ici",
+        "familles"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    },
+    {
+      "id": "monlieu",
+      "label": "Mon lieu",
+      "role": "Tu accompagnes le quotidien du lieu dans la page Mon lieu : quoi faire aujourd'hui, preuves attendues, élan de la semaine, espaces vides.",
+      "quand": "où j'en suis, mon tableau de bord, que faire aujourd'hui, résumé de mon projet, prochaine étape",
+      "questions": [
+        "Que faire aujourd'hui ?",
+        "Comment lire l'élan de la semaine ?",
+        "Pourquoi un espace est vide ?"
+      ],
+      "motsCles": [],
+      "mode": "monlieu",
+      "faq": [
+        20,
+        27
+      ],
+      "donnees": [
+        "quetes",
+        "ici"
+      ],
+      "actif": true,
+      "pause": false,
+      "temperature": 0.4,
+      "maxTokens": 450,
+      "budgetJour": 200000
+    }
+  ]
+}

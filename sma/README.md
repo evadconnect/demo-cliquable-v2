@@ -22,6 +22,22 @@ Réponse + 0 à 2 questions de suivi + nom de l'agent (affiché sous la bulle)
 - **Gardien** : contrôle par règles chaque réponse. S'il trouve un chiffre d'impact ou un mot exclu, il fait réécrire la réponse ; si le problème persiste, il la remplace par la phrase de doctrine (« Je ne calcule pas l'impact à ta place... »). Les tirets cadratins sont remplacés automatiquement.
 - **Repli** : si le Worker n'est pas configuré, ne répond pas, ou si le quota est atteint, Deva répond avec ses règles locales, comme avant. Le site ne casse jamais.
 
+## Administrer les agents sans toucher au code (admin.html)
+
+La configuration des agents n'est plus écrite dans le code : elle vit dans **`sma/agents.json`**, lu par le Worker en ligne et par le mode local. On la modifie depuis la page **`admin.html`** (https://evadconnect.github.io/demo-cliquable-v2/admin.html, ou http://localhost:8790/admin.html).
+
+Pour chaque agent : nom, rôle et objectif, « Quand l'utiliser » (lu par l'orchestrateur), questions rattachées, mots-clés (orchestrateur du mode local), page de rattachement, connaissances données, actif ou non, pause, créativité, longueur maximale, budget de tokens par jour. On peut aussi créer un nouvel agent, mettre l'orchestrateur en pause (l'agent de la page répond alors directement) et ajouter des mots interdits au gardien. Le gardien ne peut pas être désactivé : il protège la doctrine.
+
+- **Brouillon** : les modifications restent dans le navigateur tant qu'elles ne sont pas publiées.
+- **Tester** : le vrai SMA (`sma/worker.js`) tourne dans la page avec le brouillon, sur Ollama (local, gratuit) ou une API compatible OpenAI. Chaque test affiche l'agent qui a répondu, le temps, les tokens et le passage du gardien ; on note la réponse (bonne ou non). « Vérifier l'orientation » envoie chaque question rattachée depuis l'accueil et compte celles qui arrivent au bon agent.
+- **Publier** : écrit `sma/agents.json` dans le dépôt par l'API GitHub. Il faut un jeton GitHub « fine-grained », limité à ce dépôt, avec la permission *Contents : Read and write* (GitHub > Settings > Developer settings > Personal access tokens > Fine-grained tokens). Le jeton reste dans le navigateur de la personne. Le site et le Worker relisent le fichier en 10 minutes environ. Chaque publication est un commit : on peut revenir en arrière depuis l'historique GitHub.
+- **Sans jeton** : « Télécharger agents.json », puis déposer le fichier dans `sma/` sur GitHub.
+- **Consommation** : tokens des tests faits dans la page, et usage réel du site si la table Supabase existe (exécuter une fois `supabase/deva-usage.sql`). Le site enregistre une ligne par réponse : agent, tokens, modèle, sans question, sans réponse, sans compte.
+- **Budget par jour** : au-delà, l'agent est mis de côté jusqu'au lendemain (compteur en mémoire du Worker, approximatif comme les quotas).
+- **Sécurité** : si `agents.json` est injoignable ou cassé, le Worker garde la dernière configuration lue, sinon les agents écrits dans `sma/worker.js`. Si aucun agent n'est disponible, Deva répond par règles. Les options de test (`AGENTS_CONFIG`, `FORCE_AGENT`) ne passent que par la page d'administration, jamais par une requête du site.
+
+Après cette mise à jour, le code du Worker Cloudflare doit être recollé une fois (étape 3 ci-dessous) pour qu'il lise `agents.json`.
+
 ## Coût : gratuit pour une bêta
 
 | Service | Offre | Rôle |
@@ -42,7 +58,7 @@ Le Worker accepte toute API compatible OpenAI : Groq (`https://api.groq.com/open
 5. Ouvrir l'adresse du Worker (`https://deva-sma.<compte>.workers.dev`) dans le navigateur : on doit lire `"ok":true` et `"cle":true`.
 6. Dans `assets/deva.js`, mettre cette adresse dans `SMA_URL`, puis publier sur GitHub.
 
-Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLEDGE_URL` (par défaut la base publiée sur GitHub Pages), `ALLOWED_ORIGINS` (sites autorisés à appeler le Worker, par défaut GitHub Pages et localhost:8790), `QUOTA_IP_MINUTE` (20), `QUOTA_IP_JOUR` (60), `QUOTA_JOUR` (2000).
+Variables optionnelles : `LLM_BASE_URL`, `MODEL_AGENT`, `MODEL_RAPIDE`, `KNOWLEDGE_URL` (par défaut la base publiée sur GitHub Pages), `AGENTS_URL` (par défaut `sma/agents.json` publié sur GitHub Pages), `ALLOWED_ORIGINS` (sites autorisés à appeler le Worker, par défaut GitHub Pages et localhost:8790), `QUOTA_IP_MINUTE` (20), `QUOTA_IP_JOUR` (60), `QUOTA_JOUR` (2000).
 
 ## Contre les abus : ce qui borne la dépense
 
