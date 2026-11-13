@@ -76,6 +76,22 @@
     return r.data || [];
   }
 
+  // Consommation du SMA de Deva : une ligne par réponse (agent, tokens, modèle), sans texte ni identité.
+  // Table facultative (supabase/deva-usage.sql) : si elle n'existe pas, rien ne casse.
+  function logUsage(agent, tokens, modele) {
+    if (!client || !agent) return;
+    client.from("deva_usage").insert({ agent: String(agent).slice(0, 40), tokens: Math.max(0, Math.min(20000, Math.round(tokens) || 0)), modele: String(modele || "").slice(0, 60) })
+      .then(function (r) { if (r.error) console.warn("[EVAD] consommation Deva non enregistrée :", err(r.error)); });
+  }
+  // Totaux par jour et par agent, pour admin.html.
+  async function loadUsage(jours) {
+    if (!client) throw new Error("Supabase indisponible");
+    var depuis = new Date(Date.now() - (jours || 30) * 86400000).toISOString().slice(0, 10);
+    var r = await client.from("deva_usage_jour").select("*").gte("jour", depuis).limit(5000);
+    if (r.error) throw new Error(err(r.error));
+    return r.data || [];
+  }
+
   function traduire(e) {
     var m = (e && e.message) || "";
     if (/Invalid login credentials/i.test(m)) return "Email ou mot de passe incorrect.";
@@ -91,6 +107,7 @@
     env: ENV, ready: ready, getUser: getUser, signIn: signIn, signUp: signUp, signOut: signOut,
     resetPassword: resetPassword, updatePassword: updatePassword, onRecovery: onRecovery,
     loadMyProject: loadMyProject, saveProject: saveProject, loadPublicPlaces: loadPublicPlaces,
-    carteStatus: function () { return carteStatus; }, carteErreur: function () { return carteErreur; }
+    carteStatus: function () { return carteStatus; }, carteErreur: function () { return carteErreur; },
+    logUsage: logUsage, loadUsage: loadUsage
   };
 })();
