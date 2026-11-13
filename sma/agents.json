@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "majLe": "2026-11-13T12:16:48.271Z",
+  "majLe": "2026-11-13T12:18:35.725Z",
   "orchestrateur": {
     "label": "Orchestrateur",
     "role": "Tu es l'orchestrateur du système multi-agents de Deva, l'assistant d'EVAD. Tu choisis UN agent pour répondre.",
@@ -222,7 +222,7 @@
         "ici"
       ],
       "actif": true,
-      "pause": true,
+      "pause": false,
       "temperature": 0.4,
       "maxTokens": 450,
       "budgetJour": 200000
